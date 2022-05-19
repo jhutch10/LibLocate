@@ -1,0 +1,802 @@
+<!-- Python Search Program -->
+
+<lead>
+<link rel="stylesheet" href="https://library.anderson.edu/themes/niclib2021/assets/vendor/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://library.anderson.edu/themes/niclib2021/assets/css/main.css" id="theme-link">
+<link rel="stylesheet" href="https://library.anderson.edu/themes/niclib2021/assets/css/media-queries.css">
+<script src="https://library.anderson.edu/themes/niclib2021/assets/vendor/jquery/jquery-3.4.1.min.js"></script>
+<script src="https://library.anderson.edu/themes/niclib2021/assets/vendor/jquery/popper.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.js"></script>
+</lead>
+<header>
+<nav class="navbar navbar-expand-lg">
+    <a class="navbar-brand" href="/"></a>
+    <a href="/hours" class="headerHours"><em>Today's Hours: <span class="displayHours"></span></em></a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span> Menu
+    </button>
+
+    <div class="main-menu">
+        <div class="justify-content-end">
+            <ul class="nav">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownStudents" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Students</a>
+                    <div class="dropdown-menu dropdown-menu-lg-right" aria-label="Students dropdown menu">
+
+                        {{ page.nav_students }}
+
+                        <div class="dropdown-divider"></div>
+                        <h5 class="dropdown-RR"><b>Recommended Resources</b></h5>
+
+                        {{ page.nav_students_rec_resources }}
+
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="/contact">Contact a Librarian</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownFaculty" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Faculty</a>
+                    <div class="dropdown-menu dropdown-menu-lg-right" aria-label="Faculty dropdown menu">
+
+                        {{ page.nav_faculty }}
+
+                        <div class="dropdown-divider"></div>
+                        <h5 class="dropdown-RR"><b>Recommended Resources</b></h5>
+
+                        {{ page.nav_faculty_rec_resources }}
+
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="/contact">Contact a Librarian</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownArchives" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Archives</a>
+                    <div class="dropdown-menu dropdown-menu-lg-right" aria-label="Archives dropdown menu">
+
+                        {{ page.nav_archives }}
+
+                        <div class="dropdown-divider"></div>
+          
+                        <a class="dropdown-item" href="/contact">Contact a Librarian</a>
+                    </div>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownAbout" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">About</a>
+                    <div class="dropdown-menu dropdown-menu-lg-right" aria-label="About dropdown menu">
+
+                        {{ page.nav_about }}
+
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="/contact">Contact a Librarian</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="mobile-menu collapse" id="navbarSupportedContent">
+        <ul class="mobile-parent-menu">
+            <li class="mobile-menu-item">Students <span class="menu-expand-icon"><i class="fas fa-caret-down"></i></span>
+                <ul class="mobile-child-menu">
+
+                    {{ page.mobile_nav_students }}
+
+                </ul>
+            </li>
+            <li class="mobile-menu-item">Faculty <span class="menu-expand-icon"><i class="fas fa-caret-down"></i></span>
+                <ul class="mobile-child-menu">
+
+                    {{ page.mobile_nav_faculty }}
+
+                </ul>
+            </li>
+            <li class="mobile-menu-item">Archives <span class="menu-expand-icon"><i class="fas fa-caret-down"></i></span>
+                <ul class="mobile-child-menu">
+
+                    {{ page.mobile_nav_archives }}
+
+                </ul>
+            </li>
+            <li class="mobile-menu-item">About <span class="menu-expand-icon"><i class="fas fa-caret-down"></i></span>
+                <ul class="mobile-child-menu">
+
+                    {{ page.mobile_nav_about }}
+
+                </ul>
+            </li>
+            <li class="mobile-menu-item"><a href="/contact">Contact a Librarian</a></li>
+        </ul>
+    </div>
+</nav>
+</header>
+
+<body onload="brython({debug:1})">
+	<div id="spacing" style="padding-top:.35em; padding-bottom:.35em">
+	<p>This program is still in alpha. Fully functional with Firefox for desktop.</p>
+		<ul>
+		<li><h2>Currently only contains Ground Floor data stacks & services data</h2></li>
+		<li><h2>Click off the text box to submit input. Enter key will reload page.</h2></li>
+		<li><h2>Some browsers may block pop-ups (map graphics) or javascript from loading.</h2></li>
+	</ul>
+	<p>Thanks for testing!</p>
+	</div>
+	<div style="text-align: center;">
+		<p class="flavor">Welcome to the Robert A. Nicholson Library. Please Follow On-Screen Prompts.</p>
+		<p class="instructions">Are you Searching for a (1)Bookshelf or a (2)Room?</p>
+		<form>
+			<input type="text" id="prompt" autocomplete="off">
+		</form>
+	</div>
+
+<script type="text/python" class="webworker" id="worker">
+from browser import bind, self
+@bind(self, "message")
+def message(evt):
+	try:
+		inprompt = str(evt.data[0])
+		# Send a message to the main script.
+		# In the main script, it will be handled by the function bound to
+		# the event "message" for the worker.
+		self.send(inprompt)
+	except ValueError:
+		self.send('Please Enter A Valid Response')
+</script>
+
+<script type="text/python">
+"""Main script."""
+from browser import bind, document, worker
+from browser.session_storage import storage
+import webbrowser
+
+ins = document.select_one('.instructions')
+flavor = document.select_one('.flavor')
+inputs = document.select("input")
+# Create a web worker, identified by a script id in this page.
+myWorker = worker.Worker("worker")
+storage['mode'] = "none"
+
+@bind(inputs, "change")
+def change(evt):
+	"""Called when the value in one of the input fields changes."""
+	# Send a message (here a list of values) to the worker
+	myWorker.send([x.value for x in inputs])
+
+@bind(myWorker, "message")
+def onmessage(e):
+	"""Handles the messages sent by the worker."""
+	if storage['mode'] == "book":
+		if e.data == "9":
+			storage['mode'] = "callnum1"
+			flavor.text = "Search by Call Number"
+			ins.text = "Please Enter the First Set Capitalized Letter(s) of Your Book's Call Number"
+		if e.data == "0":
+			storage['mode'] = "directshelf"
+			flavor.text = "Search by Shelf Number"
+			ins.text = "Please Enter the 4 Character Code for the Shelf (ex: 001a)"
+	if storage['mode'] == "callnum1":
+		letters = ['A', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ', 'B', 'BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BK', 'BL', 'BM', 'BN', 'BO', 'BP', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW', 'BX', 'BY', 'BZ', 'C', 'CA', 'CB', 'CC', 'CD', 'CE', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CL', 'CM', 'CN', 'CO', 'CP', 'CQ', 'CR', 'CS', 'CT', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ',  'D', 'DA', 'DB', 'DC', 'DD', 'DE', 'DF', 'DG', 'DH', 'DI', 'DJ', 'DK', 'DL', 'DM', 'DN', 'DO', 'DP', 'DQ', 'DR', 'DS', 'DT', 'DU', 'DV', 'DW', 'DX', 'DY', 'DZ', 'E', 'EA', 'EB', 'EC', 'ED', 'EE', 'EF', 'EG', 'EH', 'EI', 'EJ', 'EK', 'EL', 'EM', 'EN', 'EO', 'EP', 'EQ', 'ER', 'ES', 'ET', 'EU', 'EV', 'EW', 'EX', 'EY', 'EZ', 'F',  'FA', 'FB', 'FC', 'FD', 'FE', 'FF', 'FG', 'FH', 'FI', 'FJ', 'FK', 'FL', 'FM', 'FN', 'FO', 'FP', 'FQ', 'FR', 'FS', 'FT', 'FU', 'FV', 'FW', 'FX', 'FY', 'FZ', 'G', 'GA', 'GB', 'GC', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GJ', 'GK', 'GL', 'GM', 'GN', 'GO', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GV', 'GW', 'GX', 'GY', 'GZ', 'H', 'HA', 'HB', 'HC', 'HD', 'HE', 'HF', 'HG', 'HH', 'HI', 'HJ', 'HK', 'HL', 'HM', 'HN', 'HO', 'HP', 'HQ', 'HR', 'HS', 'HT', 'HU', 'HV', 'HW', 'HX', 'HY', 'HZ', 'I', 'IA', 'IB', 'IC', 'ID', 'IE', 'IF', 'IG', 'IH', 'II', 'IJ', 'IK', 'IL', 'IM', 'IN', 'IO', 'IP', 'IQ', 'IR', 'IS', 'IT', 'IU', 'IV', 'IW', 'IX', 'IY', 'IZ', 'J', 'JA', 'JB', 'JC', 'JD', 'JE', 'JF', 'JG', 'JH', 'JI', 'JJ', 'JK', 'JL', 'JM', 'JN', 'JO', 'JP', 'JQ', 'JR', 'JS', 'JT', 'JU', 'JV', 'JW', 'JX', 'JY', 'JZ', 'K', 'KA', 'KB', 'KC', 'KD', 'KE', 'KF', 'KG', 'KH', 'KI', 'KJ', 'KK', 'KL', 'KM', 'KN', 'KO', 'KP', 'KQ', 'KR', 'KS', 'KT', 'KU', 'KV', 'KW', 'KX', 'KY', 'KZ', 'L', 'LA', 'LB', 'LC', 'LD', 'LE', 'LF', 'LG', 'LH', 'LI', 'LJ', 'LK', 'LL', 'LM', 'LN', 'LO', 'LP', 'LQ', 'LR', 'LS', 'LT', 'LU', 'LV', 'LW', 'LX', 'LY', 'LZ', 'M', 'MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MI', 'MJ', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'N', 'NA', 'NB', 'NC', 'ND', 'NE', 'NF', 'NG', 'NH', 'NI', 'NJ', 'NK', 'NL', 'NM', 'NN', 'NO', 'NP', 'NQ', 'NR', 'NS', 'NT', 'NU', 'NV', 'NW', 'NX', 'NY', 'NZ', 'O', 'OA', 'OB', 'OC', 'OD', 'OE', 'OF', 'OG', 'OH', 'OI', 'OJ', 'OK', 'OL', 'OM', 'ON', 'OO', 'OP', 'OQ', 'OR', 'OS', 'OT', 'OU', 'OV', 'OW', 'OX', 'OY', 'OZ', 'P', 'PA', 'PB', 'PC', 'PD', 'PE', 'PF', 'PG', 'PH', 'PI', 'PJ', 'PK', 'PL', 'PM', 'PN', 'PO', 'PP', 'PQ', 'PR', 'PS', 'PT', 'PU', 'PV', 'PW', 'PX', 'PY', 'PZ', 'Q', 'QA', 'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH', 'QI', 'QJ', 'QK', 'QL', 'QM', 'QN', 'QO', 'QP', 'QQ', 'QR', 'QS', 'QT', 'QU', 'QV', 'QW', 'QX', 'QY', 'QZ', 'R', 'RA', 'RB', 'RC', 'RD', 'RE', 'RF', 'RG', 'RH', 'RI', 'RJ', 'RK', 'RL', 'RM', 'RN', 'RO', 'RP', 'RQ', 'RR', 'RS', 'RT', 'RU', 'RV', 'RW', 'RX', 'RY', 'RZ', 'S', 'SA', 'SB', 'SC', 'SD', 'SE', 'SF', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SP', 'SQ', 'SR', 'SS', 'ST', 'SU', 'SV', 'SW', 'SX', 'SY', 'SZ', 'T', 'TA', 'TB', 'TC', 'TD', 'TE', 'TF', 'TG', 'TH', 'TI', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TP', 'TQ', 'TR', 'TS', 'TT', 'TU', 'TV', 'TW', 'TX', 'TY', 'TZ', 'U', 'UA', 'UB', 'UC', 'UD', 'UE', 'UF', 'UG', 'UH', 'UI', 'UJ', 'UK', 'UL', 'UM', 'UN', 'UO', 'UP', 'UQ', 'UR', 'US', 'UT', 'UU', 'UV', 'UW', 'UX', 'UY', 'UZ', 'V', 'VA', 'VB', 'VC', 'VD', 'VE', 'VF', 'VG', 'VH', 'VI', 'VJ', 'VK', 'VL', 'VM', 'VN', 'VO', 'VP', 'VQ', 'VR', 'VS', 'VT', 'VU', 'VV', 'VW', 'VX', 'VY', 'VZ', 'W', 'WA', 'WB', 'WC', 'WD', 'WE', 'WF', 'WG', 'WH', 'WI', 'WJ', 'WK', 'WL', 'WM', 'WN', 'WO', 'WP', 'WQ', 'WR', 'WS', 'WT', 'WU', 'WV', 'WW', 'WX', 'WY', 'WZ', 'X', 'XA', 'XB', 'XC', 'XD', 'XE', 'XF', 'XG', 'XH', 'XI', 'XJ', 'XK', 'XL', 'XM', 'XN', 'XO', 'XP', 'XQ', 'XR', 'XS', 'XT', 'XU', 'XV', 'XW', 'XX', 'XY', 'XZ', 'Y', 'YA', 'YB', 'YC', 'YD', 'YE', 'YF', 'YG', 'YH', 'YI', 'YJ', 'YK', 'YL', 'YM', 'YN', 'YO', 'YP', 'YQ', 'YR', 'YS', 'YT', 'YU', 'YV', 'YW', 'YX', 'YY', 'YZ', 'Z', 'ZA', 'ZB', 'ZC', 'ZD', 'ZE', 'ZF', 'ZG', 'ZH', 'ZI', 'ZJ', 'ZK', 'ZL', 'ZM', 'ZN', 'ZO', 'ZP', 'ZQ', 'ZR', 'ZS', 'ZT', 'ZU', 'ZV', 'ZW', 'ZX', 'ZY', 'ZZ']
+		for i in range(len(letters)):
+			if letters[i] == e.data:
+				storage['mode'] = "callnum2"
+				storage['letter'] = str(i)
+				flavor.text = f'Call Number: {e.data}'
+				ins.text = "Please Enter the Digits Preceding the First '.'"
+		letterslow = ['a', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al', 'am', 'an', 'ao', 'ap', 'aq', 'ar', 'as', 'at', 'au', 'av', 'aw', 'ax', 'ay', 'az', 'b', 'ba', 'bb', 'bc', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bk', 'bl', 'bm', 'bn', 'bo', 'bp', 'bq', 'br', 'bs', 'bt', 'bu', 'bv', 'bw', 'bx', 'by', 'bz', 'c', 'ca', 'cb', 'cc', 'cd', 'ce', 'cf', 'cg', 'ch', 'ci', 'cj', 'ck', 'cl', 'cm', 'cn', 'co', 'cp', 'cq', 'cr', 'cs', 'ct', 'cu', 'cv', 'cw', 'cx', 'cy', 'cz',  'd', 'da', 'db', 'dc', 'dd', 'de', 'df', 'dg', 'dh', 'di', 'dj', 'dk', 'dl', 'dm', 'dn', 'do', 'dp', 'dq', 'dr', 'ds', 'dt', 'du', 'dv', 'dw', 'dx', 'dy', 'dz', 'e', 'ea', 'eb', 'ec', 'ed', 'ee', 'ef', 'eg', 'eh', 'ei', 'ej', 'ek', 'el', 'em', 'en', 'eo', 'ep', 'eq', 'er', 'es', 'et', 'eu', 'ev', 'ew', 'ex', 'ey', 'ez', 'f',  'fa', 'fb', 'fc', 'fd', 'fe', 'ff', 'fg', 'fh', 'fi', 'fj', 'fk', 'fl', 'fm', 'fn', 'fo', 'fp', 'fq', 'fr', 'fs', 'ft', 'fu', 'fv', 'fw', 'fx', 'fy', 'fz', 'g', 'ga', 'gb', 'gc', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gj', 'gk', 'gl', 'gm', 'gn', 'go', 'gp', 'gq', 'gr', 'gs', 'gt', 'gu', 'gv', 'gw', 'gx', 'gy', 'gz', 'h', 'ha', 'hb', 'hc', 'hd', 'he', 'hf', 'hg', 'hh', 'hi', 'hj', 'hk', 'hl', 'hm', 'hn', 'ho', 'hp', 'hq', 'hr', 'hs', 'ht', 'hu', 'hv', 'hw', 'hx', 'hy', 'hz', 'i', 'ia', 'ib', 'ic', 'id', 'ie', 'if', 'ig', 'ih', 'ii', 'ij', 'ik', 'il', 'im', 'in', 'io', 'ip', 'iq', 'ir', 'is', 'it', 'iu', 'iv', 'iw', 'ix', 'iy', 'iz', 'j', 'ja', 'jb', 'jc', 'jd', 'je', 'jf', 'jg', 'jh', 'ji', 'jj', 'jk', 'jl', 'jm', 'jn', 'jo', 'jp', 'jq', 'jr', 'js', 'jt', 'ju', 'jv', 'jw', 'jx', 'jy', 'jz', 'k', 'ka', 'kb', 'kc', 'kd', 'ke', 'kf', 'kg', 'kh', 'ki', 'kj', 'kk', 'kl', 'km', 'kn', 'ko', 'kp', 'kq', 'kr', 'ks', 'kt', 'ku', 'kv', 'kw', 'kx', 'ky', 'kz', 'l', 'la', 'lb', 'lc', 'ld', 'le', 'lf', 'lg', 'lh', 'li', 'lj', 'lk', 'll', 'lm', 'ln', 'lo', 'lp', 'lq', 'lr', 'ls', 'lt', 'lu', 'lv', 'lw', 'lx', 'ly', 'lz', 'm', 'ma', 'mb', 'mc', 'md', 'me', 'mf', 'mg', 'mh', 'mi', 'mj', 'mk', 'ml', 'mm', 'mn', 'mo', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'n', 'na', 'nb', 'nc', 'nd', 'ne', 'nf', 'ng', 'nh', 'ni', 'nj', 'nk', 'nl', 'nm', 'nn', 'no', 'np', 'nq', 'nr', 'ns', 'nt', 'nu', 'nv', 'nw', 'nx', 'ny', 'nz', 'o', 'oa', 'ob', 'oc', 'od', 'oe', 'of', 'og', 'oh', 'oi', 'oj', 'ok', 'ol', 'om', 'on', 'oo', 'op', 'oq', 'or', 'os', 'ot', 'ou', 'ov', 'ow', 'ox', 'oy', 'oz', 'p', 'pa', 'pb', 'pc', 'pd', 'pe', 'pf', 'pg', 'ph', 'pi', 'pj', 'pk', 'pl', 'pm', 'pn', 'po', 'pp', 'pq', 'pr', 'ps', 'pt', 'pu', 'pv', 'pw', 'px', 'py', 'pz', 'q', 'qa', 'qb', 'qc', 'qd', 'qe', 'qf', 'qg', 'qh', 'qi', 'qj', 'qk', 'ql', 'qm', 'qn', 'qo', 'qp', 'qq', 'qr', 'qs', 'qt', 'qu', 'qv', 'qw', 'qx', 'qy', 'qz', 'r', 'ra', 'rb', 'rc', 'rd', 're', 'rf', 'rg', 'rh', 'ri', 'rj', 'rk', 'rl', 'rm', 'rn', 'ro', 'rp', 'rq', 'rr', 'rs', 'rt', 'ru', 'rv', 'rw', 'rx', 'ry', 'rz', 's', 'sa', 'sb', 'sc', 'sd', 'se', 'sf', 'sg', 'sh', 'si', 'sj', 'sk', 'sl', 'sm', 'sn', 'so', 'sp', 'sq', 'sr', 'ss', 'st', 'su', 'sv', 'sw', 'sx', 'sy', 'sz', 't', 'ta', 'tb', 'tc', 'td', 'te', 'tf', 'tg', 'th', 'ti', 'tj', 'tk', 'tl', 'tm', 'tn', 'to', 'tp', 'tq', 'tr', 'ts', 'tt', 'tu', 'tv', 'tw', 'tx', 'ty', 'tz', 'u', 'ua', 'ub', 'uc', 'ud', 'ue', 'uf', 'ug', 'uh', 'ui', 'uj', 'uk', 'ul', 'um', 'un', 'uo', 'up', 'uq', 'ur', 'us', 'ut', 'uu', 'uv', 'uw', 'ux', 'uy', 'uz', 'v', 'va', 'vb', 'vc', 'vd', 've', 'vf', 'vg', 'vh', 'vi', 'vj', 'vk', 'vl', 'vm', 'vn', 'vo', 'vp', 'vq', 'vr', 'vs', 'vt', 'vu', 'vv', 'vw', 'vx', 'vy', 'vz', 'w', 'wa', 'wb', 'wc', 'wd', 'we', 'wf', 'wg', 'wh', 'wi', 'wj', 'wk', 'wl', 'wm', 'wn', 'wo', 'wp', 'wq', 'wr', 'ws', 'wt', 'wu', 'wv', 'ww', 'wx', 'wy', 'wz', 'x', 'xa', 'xb', 'xc', 'xd', 'xe', 'xf', 'xg', 'xh', 'xi', 'xj', 'xk', 'xl', 'xm', 'xn', 'xo', 'xp', 'xq', 'xr', 'xs', 'xt', 'xu', 'xv', 'xw', 'xx', 'xy', 'xz', 'y', 'ya', 'yb', 'yc', 'yd', 'ye', 'yf', 'yg', 'yh', 'yi', 'yj', 'yk', 'yl', 'ym', 'yn', 'yo', 'yp', 'yq', 'yr', 'ys', 'yt', 'yu', 'yv', 'yw', 'yx', 'yy', 'yz', 'z', 'za', 'zb', 'zc', 'zd', 'ze', 'zf', 'zg', 'zh', 'zi', 'zj', 'zk', 'zl', 'zm', 'zn', 'zo', 'zp', 'zq', 'zr', 'zs', 'zt', 'zu', 'zv', 'zw', 'zx', 'zy', 'zz']
+		for i in range(len(letterslow)):
+			if letterslow[i] == e.data:
+				storage['mode'] = "callnum2"
+				storage['letter'] = str(i)
+				flavor.text = f'Call Number: {e.data}'
+				ins.text = "Please Enter the Digits Preceding the First '.'"
+	if storage['mode'] == "callnum2":
+		for i in range(1, 10000):
+			if int(e.data) == i:
+				storage['mode'] = "cnresults"
+				ins.text = "Would you like to Search Again y/n?"
+				if int(storage['letter']) <= 26:
+					webbrowser.open('images/search/001a.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 001a"
+				if int(storage['letter']) == 27:
+					if int(e.data) <= 59:
+						webbrowser.open('images/search/001a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 001a"
+					if 60 <= int(e.data) <= 819:
+						webbrowser.open('images/search/002a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 002a"
+					if 819 <= int(e.data) <= 2422:
+						webbrowser.open('images/search/002b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 002b"
+					else:
+						webbrowser.open('images/search/001b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 001b"
+				if 28 <= int(storage['letter']) <= 29:
+					webbrowser.open('images/search/001b.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 001b"
+				if int(storage['letter']) == 30:
+					if int(e.data) <= 108:
+						webbrowser.open('images/search/001b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 001b"
+					else:
+						webbrowser.open('images/search/003a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 003a"
+				if 31 <= int(storage['letter']) <= 32 :
+					webbrowser.open('images/search/003a.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 003a"
+				if int(storage['letter']) == 33:
+					if int(e.data) <= 38:
+						webbrowser.open('images/search/003a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 003a"
+					if 39 <= int(e.data) <= 181:
+						webbrowser.open('images/search/004a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 004a"
+					if 182 <= int(e.data) <= 575:
+						webbrowser.open('images/search/004b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 004b"
+					if 576 <= int(e.data) <= 673:
+						webbrowser.open('images/search/003b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 003b"
+					if 674 <= int(e.data) <= 723:
+						webbrowser.open('images/search/005a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 005a"
+					else:
+						webbrowser.open('images/search/006a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 006a"
+				if 34<= int(storage['letter']) <= 36:
+					webbrowser.open('images/search/006a.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 006a"
+				if int(storage['letter']) == 37:
+					if int(e.data) <= 182:
+						webbrowser.open('images/search/006a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 006a"
+					if 183 <= int(e.data) <= 1581:
+						webbrowser.open('images/search/006b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 006b"
+					else:
+						webbrowser.open('images/search/005b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 005b"
+				if int(storage['letter']) == 38:
+					webbrowser.open('images/search/005b.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 005b"
+				if int(storage['letter']) == 39:
+					if int(e.data) <= 51:
+						webbrowser.open('images/search/005b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 005b"
+					if 52 <= int(e.data) <= 80:
+						webbrowser.open('images/search/007a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 007a"
+					if 81 <= int(e.data) <= 560:
+						webbrowser.open('images/search/008a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 008a"
+					if 561 <= int(e.data) <= 2480:
+						webbrowser.open('images/search/008b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 008b"
+					else:
+						webbrowser.open('images/search/007b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 007b"
+				if int(storage['letter']) == 40:
+					if int(e.data) <= 487:
+						flavor.text = "images/search/007b.jpg"
+					if 488 <= int(e.data) <= 729:
+						webbrowser.open('images/search/009a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 009a"
+					else:
+						webbrowser.open('images/search/010a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 010a"
+				if 41 <= int(storage['letter']) <= 44:
+					webbrowser.open('images/search/010a.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 010a"
+				if int(storage['letter']) == 45:
+					if int(e.data) <= 65:
+						webbrowser.open('images/search/010a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 010a"
+					if 66 <= int(e.data) <= 115:
+						webbrowser.open('images/search/010b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 010b"
+					if 116 <= int(e.data) <= 123:
+						webbrowser.open('images/search/009b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 009b"
+					if 124 <= int(e.data) <= 155:
+						webbrowser.open('images/search/011a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 011a"
+					if 156 <= int(e.data) <= 329:
+						webbrowser.open('images/search/012a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 012a"
+					if 330 <= int(e.data) <= 516:
+						webbrowser.open('images/search/012b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 012b"
+					if 517 <= int(e.data) <= 1085:
+						webbrowser.open('images/search/011b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 011b"
+					else:
+						webbrowser.open('images/search/013a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 013a"
+				if int(storage['letter']) == 46:
+					if int(e.data) <= 64:
+						webbrowser.open('images/search/013a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 013a"
+					if 65 <= int(e.data) <= 490:
+						webbrowser.open('images/search/014a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 014a"
+					if int == 491:
+						webbrowser.open('images/search/014b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 014b"
+					if 492 <= int(e.data) <= 551:
+						webbrowser.open('images/search/013b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 013b"
+					if 552 <= int(e.data) <= 651:
+						webbrowser.open('images/search/015a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 015a"
+					if 652 <= int(e.data) <= 1180:
+						webbrowser.open('images/search/016a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 016a"
+					if 1181 <= int(e.data) <= 1245:
+						webbrowser.open('images/search/016b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 016b"
+					if 1246 <= int(e.data) <= 1430:
+						webbrowser.open('images/search/015b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 015b"
+					if 1431 <= int(e.data) <= 1537:
+						webbrowser.open('images/search/017a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 017a"
+					if 1538 <= int(e.data) <= 2095:
+						webbrowser.open('images/search/017b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 017b"
+					if 2096 <= int(e.data) <= 2361:
+						webbrowser.open('images/search/018a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 018a"
+					if 2361 <= int(e.data) <= 2440:
+						webbrowser.open('images/search/018b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 018b"
+					if 2441 <= int(e.data) <= 2555:
+						webbrowser.open('images/search/019a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 019a"
+					if 2556<= int(e.data) <= 2595:
+						webbrowser.open('images/search/019b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 019b"
+					if 2596 <= int(e.data) <= 2630:
+						webbrowser.open('images/search/020a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 020a"
+					if 2631 <= int(e.data) <= 2675:
+						webbrowser.open('images/search/020b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 020b"
+					if 2676 <= int(e.data) <= 2785:
+						webbrowser.open('images/search/021a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 021a"
+					else:
+						webbrowser.open('images/search/021b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 021b"
+				if int(storage['letter']) == 47:
+					if int(e.data) <= 21:
+						webbrowser.open('images/search/021b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 021b"
+					if 22 <= int(e.data) <= 75:
+						webbrowser.open('images/search/022a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 022a"
+					if 76 <= int(e.data) <= 95:
+						webbrowser.open('images/search/022b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 022b"
+					if 96 <= int(e.data) <= 198:
+						webbrowser.open('images/search/023a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 023a"
+					if 199 <= int(e.data) <= 304:
+						webbrowser.open('images/search/023b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 023b"
+					if 305 <= int(e.data) <= 704:
+						webbrowser.open('images/search/024a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 024a"
+					if 705 <= int(e.data) <= 766:
+						webbrowser.open('images/search/024b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 024b"
+					if 767 <= int(e.data) <= 979:
+						webbrowser.open('images/search/025a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 025a"
+					else:
+						webbrowser.open('images/search/025b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 025b"
+				if int(storage['letter']) == 48:
+					webbrowser.open('images/search/025b.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 025b"
+				if int(storage['letter']) == 49:
+					if int(e.data) <= 29:
+						webbrowser.open('images/search/025b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 025b"
+					if 30 <= int(e.data) <= 600:
+						webbrowser.open('images/search/026a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 026a"
+					if 601 <= int(e.data) <= 652:
+						webbrowser.open('images/search/026b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 026b"
+					if 653 <= int(e.data) <= 1464:
+						webbrowser.open('images/search/027.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 027a"
+					if 1465 <= int(e.data) <= 2063:
+						webbrowser.open('images/search/027b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 027b"
+					if 2064 <= int(e.data) <= 2595:
+						webbrowser.open('images/search/028.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 028a"
+					if 2596 <= int(e.data) <= 3461:
+						webbrowser.open('images/search/028b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 028b"
+					if 3461 <= int(e.data) <= 3785:
+						webbrowser.open('images/search/029a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 029a"
+					if 3785 <= int(e.data) <= 4011:
+						webbrowser.open('images/search/029b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 029b"
+					if 4012 <= int(e.data) <= 4211:
+						webbrowser.open('images/search/030a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 030a"
+					if 4212 <= int(e.data) <= 4438:
+						webbrowser.open('images/search/030b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 030b"
+					if 4439 <= int(e.data) <= 4596:
+						webbrowser.open('images/search/031a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 031a"
+					else:
+						webbrowser.open('images/search/031b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 031b"
+				if int(storage['letter']) == 50:
+					flavor.text = "images/search/031b.jpg"
+				if int(storage['letter']) == 51:
+					if int(e.data) <= 891:
+						webbrowser.open('images/search/031b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 031b"
+					if 892 <= int(e.data) <= 4827:
+						webbrowser.open('images/search/032a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 032a"
+					else:
+						webbrowser.open('images/search/032b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 032b"
+				if int(storage['letter']) == 52:
+					if int(e.data) <= 9322:
+						webbrowser.open('images/search/033a.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 033a"
+					else:
+						webbrowser.open('images/search/033b.jpg', autoraise=True)
+						flavor.text = "Your Book is on Shelf 033b"
+				if 53 <= int(storage['letter']) <= 74:
+					webbrowser.open('images/search/033b.jpg', autoraise=True)
+					flavor.text = "Your Book is on Shelf 033b"
+	if storage['mode'] == "cnresults":
+		if e.data == "y":
+			storage['mode'] = "callnum1"
+			flavor.text = "Search by Call Number"
+			ins.text = "Please Enter the First Set Capitalized Letter(s) of Your Book's Call Number"
+		if e.data == "n":
+			storage['mode'] = "none"
+			flavor.text = "Welcome to the Robert A. Nicholson Library. Please Follow On-Screen Prompts."
+			ins.text = "Are you Searching for a (1)Bookshelf or a (2)Room?"
+		if e.data == "Y":
+			storage['mode'] = "callnum1"
+			flavor.text = "Search by Call Number"
+			ins.text = "Please Enter the First Set Capitalized Letter(s) of Your Book's Call Number"
+		if e.data == "N":
+			storage['mode'] = "none"
+			flavor.text = "Welcome to the Robert A. Nicholson Library. Please Follow On-Screen Prompts."
+			ins.text = "Are you Searching for a (1)Bookshelf or a (2)Room?"
+	if storage['mode'] == "directshelf":
+		shelf = e.data
+		if len(shelf) == 4:
+			if shelf[0] == "0" or shelf[0] == "1" or shelf[0] == "2" or shelf[0] == "3" or shelf[0] == "4" or shelf[0] == "5" or shelf[0] == "6" or shelf[0] == "7" or shelf[0] == "8" or shelf[0] == "9":
+				if shelf[1] == "0" or shelf[1] == "1" or shelf[1] == "2" or shelf[1] == "3" or shelf[1] == "4" or shelf[1] == "5" or shelf[1] == "6" or shelf[1] == "7" or shelf[1] == "8" or shelf[1] == "9":
+					if shelf[2] == "0" or shelf[2] == "1" or shelf[2] == "2" or shelf[2] == "3" or shelf[2] == "4" or shelf[2] == "5" or shelf[2] == "6" or shelf[2] == "7" or shelf[2] == "8" or shelf[2] == "9":
+						if shelf[3] == "a" or shelf[3] == "b":
+							storage['mode'] = "dsresults"
+							link = "images/search/" + shelf + ".jpg"
+							webbrowser.open(link, autoraise=True)
+							flavor.text = shelf
+							ins.text = "Would you like to Search Again y/n?"
+	if storage['mode'] == "dsresults":
+		if e.data == "1":
+			storage['mode'] = "directshelf"
+			flavor.text = "Search by Shelf Number"
+			ins.text = "Please Enter the 4 Character Code for the Shelf (ex: 001a)"
+		if e.data == "2":
+			storage['mode'] = "none"
+			flavor.text = "Welcome to the Robert A. Nicholson Library. Please Follow On-Screen Prompts."
+			ins.text = "Are you Searching for a (1)Bookshelf or a (2)Room?"
+	if storage['mode'] == "room":
+		if e.data == "1":
+			webbrowser.open('images/search/nicmap.jpg', autoraise=True)
+			flavor.text = "Map should open in a new tab."
+			ins.text = "Refresh the Page or Select the Textbox and hit Enter to Restart"
+		if e.data == "2":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Please Select a Type: (S)Study Room (C)Computers (L)Library Services (P)Printers (O)Other"
+	if storage['mode'] == "locsearch":
+		if e.data == "S":
+			storage['mode'] = "locsearch1"
+			flavor.text = "Options for Study Rooms"
+			ins.text = "(1)All (2)Room 040 (3)Room 101 (4)Room 104 (5)Room 106 (6)Room 248 (7)Room 250 (8)Room 251 (9)Room 252 (0)Room 253 (Back)"
+		if e.data == "C":
+			storage['mode'] = "locsearch2"
+			flavor.text = "Options for Public-Use Computers"
+			ins.text = "(1)All (2)24 Hour Lab (3)Deubach Room (4)Skylight Area (5)Ground Floor West (Back)"
+		if e.data == "L":
+			storage['mode'] = "locsearch3"
+			flavor.text = "Options for Library Services"
+			ins.text = "(1)All (2)Information Desk (3)Tech Specialist (4)NicMedia (5)York Collection (6)Archives (7)Lockers (8)KACE (Back)"
+		if e.data == "P":
+			storage['mode'] = "locsearch4"
+			flavor.text = "Options for Printers"
+			ins.text = "(1)All (2)LibOrange (3)LibBlue (4)LibGreen (5)LibRed (Back)"
+		if e.data == "O":
+			storage['mode'] = "locsearch5"
+			flavor.text = "Options for Other Locations"
+			ins.text = "(1)All (2)Scholar's Nest (3)IDEA-U (4)Commuter Corner (5)Hammocks (6)Valley-Side Book Drop (7)First Floor Book Drop (Back)"
+	if storage['mode'] == "locsearch1":
+		if e.data == "1":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/All1.jpg", autoraise=True)
+			flavor.text = "All Study Rooms"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "2":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 040.jpg", autoraise=True)
+			flavor.text = "Room 040 (Good for: Groups, Meetings)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "3":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 101.jpg", autoraise=True)
+			flavor.text = "Room 101 (Good for: Self Study)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "4":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 104.jpg", autoraise=True)
+			flavor.text = "Room 104 (Good for: Self Study)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "5":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 106.jpg", autoraise=True)
+			flavor.text = "Room 106 (Good for: Small Groups)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "6":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 248.jpg", autoraise=True)
+			flavor.text = "Room 248 (Good for: Groups, Meetings)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "7":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 250.jpg", autoraise=True)
+			flavor.text = "Room 250 (Good for: Groups, Meetings)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "8":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 251.jpg", autoraise=True)
+			flavor.text = "Room 251 (Good for: Self Study)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "9":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 252.jpg", autoraise=True)
+			flavor.text = "Room 252 (Good for: Self Study)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "0":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Room 253.jpg", autoraise=True)
+			flavor.text = "Room 253 (Good for: Self Study)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "Back":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Would you like to Search Again y/n?"
+	if storage['mode'] == "locsearch2":
+		if e.data == "1":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/All2.jpg", autoraise=True)
+			flavor.text = "All Study Rooms"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "2":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/24 Hour Lab.jpg", autoraise=True)
+			flavor.text = "24 Hour Lab (Computers have Lockdown Browser)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "3":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Deubach Room.jpg", autoraise=True)
+			flavor.text = "Deubach Room"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "4":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Skylight Area.jpg", autoraise=True)
+			flavor.text = "Skylight Area"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "5":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Ground Floor West.jpg", autoraise=True)
+			flavor.text = "Ground Floor West"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "Back":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Please Select a Type: (S)Study Room (C)Computers (L)Library Services (P)Printers (O)Other"
+	if storage['mode'] == "locsearch3":
+		if e.data == "1":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/All3.jpg", autoraise=True)
+			flavor.text = "All Study Rooms"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "2":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Information Desk.jpg", autoraise=True)
+			flavor.text = "Information Desk (Check Out, General Help)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "3":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Tech Specialist.jpg", autoraise=True)
+			flavor.text = "Tech Specialist (Tech Help, Printing Projects)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "4":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/NicMedia.jpg", autoraise=True)
+			flavor.text = "NicMedia (A/V Playback, Paper Finishing)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "5":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/York Collection.jpg", autoraise=True)
+			flavor.text = "York Collection (Collection of Rare Children's Books - By Appointment)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "6":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Archives.jpg", autoraise=True)
+			flavor.text = "Archives"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "7":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Lockers.jpg", autoraise=True)
+			flavor.text = "Lockers (Reservation by Semester or Shorter)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "8":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/KACE.jpg", autoraise=True)
+			flavor.text = "Kissenger Academic Center for Excellence (KACE)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "Back":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Please Select a Type: (S)Study Room (C)Computers (L)Library Services (P)Printers (O)Other"
+	if storage['mode'] == "locsearch4":
+		if e.data == "1":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/All4.jpg", autoraise=True)
+			flavor.text = "All Study Rooms"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "2":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/LibOrange.jpg", autoraise=True)
+			flavor.text = "LibOrange (Color/B&W, Copy, Scan, Fax)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "3":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/LibBlue.jpg", autoraise=True)
+			flavor.text = "LibBlue (Color/B&W, Copy, Scan, Fax)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "4":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/LibGreen.jpg", autoraise=True)
+			flavor.text = "LibGreen (B&W, Copy, Scan, Fax)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "5":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/LibRed.jpg", autoraise=True)
+			flavor.text = "LibRed (B&W, Copy, Scan, Fax)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "Back":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Please Select a Type: (S)Study Room (C)Computers (L)Library Services (P)Printers (O)Other"
+	if storage['mode'] == "locsearch5":
+		if e.data == "1":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/All5.jpg", autoraise=True)
+			flavor.text = "All Study Rooms"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "2":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Scholar's Nest.jpg", autoraise=True)
+			flavor.text = "Scholar's Nest (Card Access)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "3":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/IDEA-U.jpg", autoraise=True)
+			flavor.text = "IDEA-U (Card Access)"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "4":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Commuter Corner.jpg", autoraise=True)
+			flavor.text = "Commuter Corner"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "5":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Hammocks.jpg", autoraise=True)
+			flavor.text = "Hammocks"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "6":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/Book Drop.jpg", autoraise=True)
+			flavor.text = "Valley-Side Book Drop"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "7":
+			storage['mode'] = "locresults"
+			webbrowser.open("images/search/1F Book Drop.jpg", autoraise=True)
+			flavor.text = "First Floor Book Drop"
+			ins.text = "Would you like to Search Again y/n?"
+		if e.data == "Back":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Please Select a Type: (S)Study Room (C)Computers (L)Library Services (P)Printers (O)Other"
+	if storage['mode'] == "none":
+		if e.data == "1":
+			storage['mode'] = "book"
+			flavor.text = "Shelf Search Mode"
+			ins.text = "Search by (9)Call Number or (0)Shelf Number?"
+		if e.data == "2":
+			storage['mode'] = "room"
+			flavor.text = "Room Search Mode"
+			ins.text = "Would you Like to (1)View a General Map or (2)Find a Specific Location?"
+	if storage['mode'] == "locresults":
+		if e.data == "y":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Please Select a Type: (S)Study Room (C)Computers (L)Library Services (P)Printers (O)Other"
+		if e.data == "n":
+			storage['mode'] = "none"
+			flavor.text = "Welcome to the Robert A. Nicholson Library. Please Follow On-Screen Prompts."
+			ins.text = "Are you Searching for a (1)Bookshelf or a (2)Room?"
+		if e.data == "Y":
+			storage['mode'] = "locsearch"
+			flavor.text = "Location and Service Search"
+			ins.text = "Please Select a Type: (S)Study Room (C)Computers (L)Library Services (P)Printers (O)Other"
+		if e.data == "N":
+			storage['mode'] = "none"
+			flavor.text = "Welcome to the Robert A. Nicholson Library. Please Follow On-Screen Prompts."
+			ins.text = "Are you Searching for a (1)Bookshelf or a (2)Room?"
+</script>
+<div style="padding-top: .35em;">
+</div>
+</body>
+
+<footer style="border-top:.25em solid var(--au-orange);box-shadow:0 -9px 8px 0px rgba(0,0,0,.4);position:relative;">
+    <div class="footernav">
+        <!-- Library Links -->
+        <div class="left">
+            <nav class="nav flex-column">
+                <h3>Helpful Library Links</h3>
+
+                {{ page.helpful_links }}
+
+            </nav>
+            &nbsp;
+            <p style="margin-top:-1.5em; font-size:.75em;"><a href="/hours">Today's Hours: <span class="displayHours"></span></a></p>
+        </div>
+
+        <!-- University Links -->
+        <div class="right">
+            <nav class="nav flex-column">
+                <h3>University Links</h3>
+
+                {{ page.university_links}}
+
+            </nav>
+        </div>
+    </div>
+</footer>
+
+<overlay>
+	<button id="chat-button" class="btn btn-lg"><i class="far fa-question-circle"></i> Chat with a Librarian</button>
+	<div id="iframeHolder" data-lh3-jid="nicref@chat.libraryh3lp.com"></div>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+	<div class="btn-group dropup">
+		<button type="button" id="light_switch" class="btn btn-secondary"><i class="far fa-lightbulb"></i></button>
+		<button type="button" class="btn btn-secondary dropdown-toggle" id="lang-button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Change Language">
+			<i class="fas fa-globe-americas"></i>
+		</button>
+		<ul class="dropdown-menu">
+			<li><a class="dropdown-item" href="/">English</a></li>
+			<li><a class="dropdown-item disabled">Español</a></li>
+			<li><a class="dropdown-item" href="/fr">Français</a></li>
+		</ul>
+	</div>
+</overlay>
