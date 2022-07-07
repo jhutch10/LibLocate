@@ -1,0 +1,1247 @@
+<!-- Python Search Program -->
+<lead>
+<link rel="stylesheet" href="https://library.anderson.edu/themes/niclib2021/assets/vendor/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://library.anderson.edu/themes/niclib2021/assets/css/locate.css">
+<script src="https://cdn.jsdelivr.net/npm/brython@3/brython.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/brython@3/brython_stdlib.js"></script>
+</lead>
+<body onload="brython({debug:1})" style="padding-top:0em;text-align:center;">
+	<div>
+	<p style="font-size:12px;margin-bottom:0rem;"><a href="https://forms.gle/KxEeTP91sGNfCB5B6" rel="noopener" target="_blank">This program is still in alpha. Help Us Improve This Tool! (Opens New Tab)</a></p>
+	</div>
+	<div id="tool" style="text-align: center;">
+		<p class="flavor">Welcome to the Robert A. Nicholson Library</p>
+		<p class="instructions">Please Select The Collection Your Book Is In.</p>
+		<form class="field">
+			<button type="reset" style="display:inline" onclick="prompt.value = '1'" id="option1">Stacks</button>
+			<button type="reset" style="display:inline" onclick="prompt.value = '2'" id="option2">Reference</button>
+			<button type="reset" style="display:inline" onclick="prompt.value = '3'" id="option3">Juvenile</button>
+			<button type="reset" style="display:inline" onclick="prompt.value = '4'" id="option4">Curriculum</button>
+			<button type="reset" style="display:inline" onclick="prompt.value = '5'" id="option5">Periodicals</button>
+			<button type="reset" style="display:none" onclick="prompt.value = 'Back'" id="back">Back</button>
+			<input type="text" id="prompt" style="display:none" onkeydown="return(event.keyCode!=13);" autocomplete="off">
+			<button type="reset" style="display:none" id="enter">Next</button>
+		</form>
+		<p class="hint" style="font-size:16px;padding-top:.15em;">Stacks contains most of the library's books. If unsure, start there.</p>
+	</div>
+
+<script type="text/python" class="webworker" id="worker">
+from browser import bind, self
+@bind(self, "message")
+def message(evt):
+	try:
+		inprompt = str(evt.data[0])
+		self.send(inprompt)
+	except ValueError:
+		self.send('Please Enter A Valid Response')
+</script>
+
+<script type="text/python">
+from browser import bind, document, worker, html
+from browser.session_storage import storage
+import webbrowser
+
+ins = document.select_one('.instructions')
+flavor = document.select_one('.flavor')
+hint = document.select_one('.hint')
+inputs = document.select("input")
+button = document.select_one("#enter")
+field = document.select_one('.field')
+myWorker = worker.Worker("worker")
+storage['mode'] = "booksel"
+letters = ['A', 'AA', 'AB', 'AC', 'AD', 'AE', 'AF', 'AG', 'AH', 'AI', 'AJ', 'AK', 'AL', 'AM', 'AN', 'AO', 'AP', 'AQ', 'AR', 'AS', 'AT', 'AU', 'AV', 'AW', 'AX', 'AY', 'AZ', 'B', 'BA', 'BB', 'BC', 'BD', 'BE', 'BF', 'BG', 'BH', 'BI', 'BJ', 'BK', 'BL', 'BM', 'BN', 'BO', 'BP', 'BQ', 'BR', 'BS', 'BT', 'BU', 'BV', 'BW', 'BX', 'BY', 'BZ', 'C', 'CA', 'CB', 'CC', 'CD', 'CE', 'CF', 'CG', 'CH', 'CI', 'CJ', 'CK', 'CL', 'CM', 'CN', 'CO', 'CP', 'CQ', 'CR', 'CS', 'CT', 'CU', 'CV', 'CW', 'CX', 'CY', 'CZ',  'D', 'DA', 'DB', 'DC', 'DD', 'DE', 'DF', 'DG', 'DH', 'DI', 'DJ', 'DK', 'DL', 'DM', 'DN', 'DO', 'DP', 'DQ', 'DR', 'DS', 'DT', 'DU', 'DV', 'DW', 'DX', 'DY', 'DZ', 'E', 'EA', 'EB', 'EC', 'ED', 'EE', 'EF', 'EG', 'EH', 'EI', 'EJ', 'EK', 'EL', 'EM', 'EN', 'EO', 'EP', 'EQ', 'ER', 'ES', 'ET', 'EU', 'EV', 'EW', 'EX', 'EY', 'EZ', 'F',  'FA', 'FB', 'FC', 'FD', 'FE', 'FF', 'FG', 'FH', 'FI', 'FJ', 'FK', 'FL', 'FM', 'FN', 'FO', 'FP', 'FQ', 'FR', 'FS', 'FT', 'FU', 'FV', 'FW', 'FX', 'FY', 'FZ', 'G', 'GA', 'GB', 'GC', 'GD', 'GE', 'GF', 'GG', 'GH', 'GI', 'GJ', 'GK', 'GL', 'GM', 'GN', 'GO', 'GP', 'GQ', 'GR', 'GS', 'GT', 'GU', 'GV', 'GW', 'GX', 'GY', 'GZ', 'H', 'HA', 'HB', 'HC', 'HD', 'HE', 'HF', 'HG', 'HH', 'HI', 'HJ', 'HK', 'HL', 'HM', 'HN', 'HO', 'HP', 'HQ', 'HR', 'HS', 'HT', 'HU', 'HV', 'HW', 'HX', 'HY', 'HZ', 'I', 'IA', 'IB', 'IC', 'ID', 'IE', 'IF', 'IG', 'IH', 'II', 'IJ', 'IK', 'IL', 'IM', 'IN', 'IO', 'IP', 'IQ', 'IR', 'IS', 'IT', 'IU', 'IV', 'IW', 'IX', 'IY', 'IZ', 'J', 'JA', 'JB', 'JC', 'JD', 'JE', 'JF', 'JG', 'JH', 'JI', 'JJ', 'JK', 'JL', 'JM', 'JN', 'JO', 'JP', 'JQ', 'JR', 'JS', 'JT', 'JU', 'JV', 'JW', 'JX', 'JY', 'JZ', 'K', 'KA', 'KB', 'KC', 'KD', 'KE', 'KF', 'KG', 'KH', 'KI', 'KJ', 'KK', 'KL', 'KM', 'KN', 'KO', 'KP', 'KQ', 'KR', 'KS', 'KT', 'KU', 'KV', 'KW', 'KX', 'KY', 'KZ', 'L', 'LA', 'LB', 'LC', 'LD', 'LE', 'LF', 'LG', 'LH', 'LI', 'LJ', 'LK', 'LL', 'LM', 'LN', 'LO', 'LP', 'LQ', 'LR', 'LS', 'LT', 'LU', 'LV', 'LW', 'LX', 'LY', 'LZ', 'M', 'MA', 'MB', 'MC', 'MD', 'ME', 'MF', 'MG', 'MH', 'MI', 'MJ', 'MK', 'ML', 'MM', 'MN', 'MO', 'MP', 'MQ', 'MR', 'MS', 'MT', 'MU', 'MV', 'MW', 'MX', 'MY', 'MZ', 'N', 'NA', 'NB', 'NC', 'ND', 'NE', 'NF', 'NG', 'NH', 'NI', 'NJ', 'NK', 'NL', 'NM', 'NN', 'NO', 'NP', 'NQ', 'NR', 'NS', 'NT', 'NU', 'NV', 'NW', 'NX', 'NY', 'NZ', 'O', 'OA', 'OB', 'OC', 'OD', 'OE', 'OF', 'OG', 'OH', 'OI', 'OJ', 'OK', 'OL', 'OM', 'ON', 'OO', 'OP', 'OQ', 'OR', 'OS', 'OT', 'OU', 'OV', 'OW', 'OX', 'OY', 'OZ', 'P', 'PA', 'PB', 'PC', 'PD', 'PE', 'PF', 'PG', 'PH', 'PI', 'PJ', 'PK', 'PL', 'PM', 'PN', 'PO', 'PP', 'PQ', 'PR', 'PS', 'PT', 'PU', 'PV', 'PW', 'PX', 'PY', 'PZ', 'Q', 'QA', 'QB', 'QC', 'QD', 'QE', 'QF', 'QG', 'QH', 'QI', 'QJ', 'QK', 'QL', 'QM', 'QN', 'QO', 'QP', 'QQ', 'QR', 'QS', 'QT', 'QU', 'QV', 'QW', 'QX', 'QY', 'QZ', 'R', 'RA', 'RB', 'RC', 'RD', 'RE', 'RF', 'RG', 'RH', 'RI', 'RJ', 'RK', 'RL', 'RM', 'RN', 'RO', 'RP', 'RQ', 'RR', 'RS', 'RT', 'RU', 'RV', 'RW', 'RX', 'RY', 'RZ', 'S', 'SA', 'SB', 'SC', 'SD', 'SE', 'SF', 'SG', 'SH', 'SI', 'SJ', 'SK', 'SL', 'SM', 'SN', 'SO', 'SP', 'SQ', 'SR', 'SS', 'ST', 'SU', 'SV', 'SW', 'SX', 'SY', 'SZ', 'T', 'TA', 'TB', 'TC', 'TD', 'TE', 'TF', 'TG', 'TH', 'TI', 'TJ', 'TK', 'TL', 'TM', 'TN', 'TO', 'TP', 'TQ', 'TR', 'TS', 'TT', 'TU', 'TV', 'TW', 'TX', 'TY', 'TZ', 'U', 'UA', 'UB', 'UC', 'UD', 'UE', 'UF', 'UG', 'UH', 'UI', 'UJ', 'UK', 'UL', 'UM', 'UN', 'UO', 'UP', 'UQ', 'UR', 'US', 'UT', 'UU', 'UV', 'UW', 'UX', 'UY', 'UZ', 'V', 'VA', 'VB', 'VC', 'VD', 'VE', 'VF', 'VG', 'VH', 'VI', 'VJ', 'VK', 'VL', 'VM', 'VN', 'VO', 'VP', 'VQ', 'VR', 'VS', 'VT', 'VU', 'VV', 'VW', 'VX', 'VY', 'VZ', 'W', 'WA', 'WB', 'WC', 'WD', 'WE', 'WF', 'WG', 'WH', 'WI', 'WJ', 'WK', 'WL', 'WM', 'WN', 'WO', 'WP', 'WQ', 'WR', 'WS', 'WT', 'WU', 'WV', 'WW', 'WX', 'WY', 'WZ', 'X', 'XA', 'XB', 'XC', 'XD', 'XE', 'XF', 'XG', 'XH', 'XI', 'XJ', 'XK', 'XL', 'XM', 'XN', 'XO', 'XP', 'XQ', 'XR', 'XS', 'XT', 'XU', 'XV', 'XW', 'XX', 'XY', 'XZ', 'Y', 'YA', 'YB', 'YC', 'YD', 'YE', 'YF', 'YG', 'YH', 'YI', 'YJ', 'YK', 'YL', 'YM', 'YN', 'YO', 'YP', 'YQ', 'YR', 'YS', 'YT', 'YU', 'YV', 'YW', 'YX', 'YY', 'YZ', 'Z', 'ZA', 'ZB', 'ZC', 'ZD', 'ZE', 'ZF', 'ZG', 'ZH', 'ZI', 'ZJ', 'ZK', 'ZL', 'ZM', 'ZN', 'ZO', 'ZP', 'ZQ', 'ZR', 'ZS', 'ZT', 'ZU', 'ZV', 'ZW', 'ZX', 'ZY', 'ZZ']
+letterslow = ['a', 'aa', 'ab', 'ac', 'ad', 'ae', 'af', 'ag', 'ah', 'ai', 'aj', 'ak', 'al', 'am', 'an', 'ao', 'ap', 'aq', 'ar', 'as', 'at', 'au', 'av', 'aw', 'ax', 'ay', 'az', 'b', 'ba', 'bb', 'bc', 'bd', 'be', 'bf', 'bg', 'bh', 'bi', 'bj', 'bk', 'bl', 'bm', 'bn', 'bo', 'bp', 'bq', 'br', 'bs', 'bt', 'bu', 'bv', 'bw', 'bx', 'by', 'bz', 'c', 'ca', 'cb', 'cc', 'cd', 'ce', 'cf', 'cg', 'ch', 'ci', 'cj', 'ck', 'cl', 'cm', 'cn', 'co', 'cp', 'cq', 'cr', 'cs', 'ct', 'cu', 'cv', 'cw', 'cx', 'cy', 'cz',  'd', 'da', 'db', 'dc', 'dd', 'de', 'df', 'dg', 'dh', 'di', 'dj', 'dk', 'dl', 'dm', 'dn', 'do', 'dp', 'dq', 'dr', 'ds', 'dt', 'du', 'dv', 'dw', 'dx', 'dy', 'dz', 'e', 'ea', 'eb', 'ec', 'ed', 'ee', 'ef', 'eg', 'eh', 'ei', 'ej', 'ek', 'el', 'em', 'en', 'eo', 'ep', 'eq', 'er', 'es', 'et', 'eu', 'ev', 'ew', 'ex', 'ey', 'ez', 'f',  'fa', 'fb', 'fc', 'fd', 'fe', 'ff', 'fg', 'fh', 'fi', 'fj', 'fk', 'fl', 'fm', 'fn', 'fo', 'fp', 'fq', 'fr', 'fs', 'ft', 'fu', 'fv', 'fw', 'fx', 'fy', 'fz', 'g', 'ga', 'gb', 'gc', 'gd', 'ge', 'gf', 'gg', 'gh', 'gi', 'gj', 'gk', 'gl', 'gm', 'gn', 'go', 'gp', 'gq', 'gr', 'gs', 'gt', 'gu', 'gv', 'gw', 'gx', 'gy', 'gz', 'h', 'ha', 'hb', 'hc', 'hd', 'he', 'hf', 'hg', 'hh', 'hi', 'hj', 'hk', 'hl', 'hm', 'hn', 'ho', 'hp', 'hq', 'hr', 'hs', 'ht', 'hu', 'hv', 'hw', 'hx', 'hy', 'hz', 'i', 'ia', 'ib', 'ic', 'id', 'ie', 'if', 'ig', 'ih', 'ii', 'ij', 'ik', 'il', 'im', 'in', 'io', 'ip', 'iq', 'ir', 'is', 'it', 'iu', 'iv', 'iw', 'ix', 'iy', 'iz', 'j', 'ja', 'jb', 'jc', 'jd', 'je', 'jf', 'jg', 'jh', 'ji', 'jj', 'jk', 'jl', 'jm', 'jn', 'jo', 'jp', 'jq', 'jr', 'js', 'jt', 'ju', 'jv', 'jw', 'jx', 'jy', 'jz', 'k', 'ka', 'kb', 'kc', 'kd', 'ke', 'kf', 'kg', 'kh', 'ki', 'kj', 'kk', 'kl', 'km', 'kn', 'ko', 'kp', 'kq', 'kr', 'ks', 'kt', 'ku', 'kv', 'kw', 'kx', 'ky', 'kz', 'l', 'la', 'lb', 'lc', 'ld', 'le', 'lf', 'lg', 'lh', 'li', 'lj', 'lk', 'll', 'lm', 'ln', 'lo', 'lp', 'lq', 'lr', 'ls', 'lt', 'lu', 'lv', 'lw', 'lx', 'ly', 'lz', 'm', 'ma', 'mb', 'mc', 'md', 'me', 'mf', 'mg', 'mh', 'mi', 'mj', 'mk', 'ml', 'mm', 'mn', 'mo', 'mp', 'mq', 'mr', 'ms', 'mt', 'mu', 'mv', 'mw', 'mx', 'my', 'mz', 'n', 'na', 'nb', 'nc', 'nd', 'ne', 'nf', 'ng', 'nh', 'ni', 'nj', 'nk', 'nl', 'nm', 'nn', 'no', 'np', 'nq', 'nr', 'ns', 'nt', 'nu', 'nv', 'nw', 'nx', 'ny', 'nz', 'o', 'oa', 'ob', 'oc', 'od', 'oe', 'of', 'og', 'oh', 'oi', 'oj', 'ok', 'ol', 'om', 'on', 'oo', 'op', 'oq', 'or', 'os', 'ot', 'ou', 'ov', 'ow', 'ox', 'oy', 'oz', 'p', 'pa', 'pb', 'pc', 'pd', 'pe', 'pf', 'pg', 'ph', 'pi', 'pj', 'pk', 'pl', 'pm', 'pn', 'po', 'pp', 'pq', 'pr', 'ps', 'pt', 'pu', 'pv', 'pw', 'px', 'py', 'pz', 'q', 'qa', 'qb', 'qc', 'qd', 'qe', 'qf', 'qg', 'qh', 'qi', 'qj', 'qk', 'ql', 'qm', 'qn', 'qo', 'qp', 'qq', 'qr', 'qs', 'qt', 'qu', 'qv', 'qw', 'qx', 'qy', 'qz', 'r', 'ra', 'rb', 'rc', 'rd', 're', 'rf', 'rg', 'rh', 'ri', 'rj', 'rk', 'rl', 'rm', 'rn', 'ro', 'rp', 'rq', 'rr', 'rs', 'rt', 'ru', 'rv', 'rw', 'rx', 'ry', 'rz', 's', 'sa', 'sb', 'sc', 'sd', 'se', 'sf', 'sg', 'sh', 'si', 'sj', 'sk', 'sl', 'sm', 'sn', 'so', 'sp', 'sq', 'sr', 'ss', 'st', 'su', 'sv', 'sw', 'sx', 'sy', 'sz', 't', 'ta', 'tb', 'tc', 'td', 'te', 'tf', 'tg', 'th', 'ti', 'tj', 'tk', 'tl', 'tm', 'tn', 'to', 'tp', 'tq', 'tr', 'ts', 'tt', 'tu', 'tv', 'tw', 'tx', 'ty', 'tz', 'u', 'ua', 'ub', 'uc', 'ud', 'ue', 'uf', 'ug', 'uh', 'ui', 'uj', 'uk', 'ul', 'um', 'un', 'uo', 'up', 'uq', 'ur', 'us', 'ut', 'uu', 'uv', 'uw', 'ux', 'uy', 'uz', 'v', 'va', 'vb', 'vc', 'vd', 've', 'vf', 'vg', 'vh', 'vi', 'vj', 'vk', 'vl', 'vm', 'vn', 'vo', 'vp', 'vq', 'vr', 'vs', 'vt', 'vu', 'vv', 'vw', 'vx', 'vy', 'vz', 'w', 'wa', 'wb', 'wc', 'wd', 'we', 'wf', 'wg', 'wh', 'wi', 'wj', 'wk', 'wl', 'wm', 'wn', 'wo', 'wp', 'wq', 'wr', 'ws', 'wt', 'wu', 'wv', 'ww', 'wx', 'wy', 'wz', 'x', 'xa', 'xb', 'xc', 'xd', 'xe', 'xf', 'xg', 'xh', 'xi', 'xj', 'xk', 'xl', 'xm', 'xn', 'xo', 'xp', 'xq', 'xr', 'xs', 'xt', 'xu', 'xv', 'xw', 'xx', 'xy', 'xz', 'y', 'ya', 'yb', 'yc', 'yd', 'ye', 'yf', 'yg', 'yh', 'yi', 'yj', 'yk', 'yl', 'ym', 'yn', 'yo', 'yp', 'yq', 'yr', 'ys', 'yt', 'yu', 'yv', 'yw', 'yx', 'yy', 'yz', 'z', 'za', 'zb', 'zc', 'zd', 'ze', 'zf', 'zg', 'zh', 'zi', 'zj', 'zk', 'zl', 'zm', 'zn', 'zo', 'zp', 'zq', 'zr', 'zs', 'zt', 'zu', 'zv', 'zw', 'zx', 'zy', 'zz']
+lettersmix1 = ['A', 'Aa', 'Ab', 'Ac', 'Ad', 'Ae', 'Af', 'Ag', 'Ah', 'Ai', 'Aj', 'Ak', 'Al', 'Am', 'An', 'Ao', 'Ap', 'Aq', 'Ar', 'As', 'At', 'Au', 'Av', 'Aw', 'Ax', 'Ay', 'Az', 'B', 'Ba', 'Bb', 'Bc', 'Bd', 'Be', 'Bf', 'Bg', 'Bh', 'Bi', 'Bj', 'Bk', 'Bl', 'Bm', 'Bn', 'Bo', 'Bp', 'Bq', 'Br', 'Bs', 'Bt', 'Bu', 'Bv', 'Bw', 'Bx', 'By', 'Bz', 'C', 'Ca', 'Cb', 'Cc', 'Cd', 'Ce', 'Cf', 'Cg', 'Ch', 'Ci', 'Cj', 'Ck', 'Cl', 'Cm', 'Cn', 'Co', 'Cp', 'Cq', 'Cr', 'Cs', 'Ct', 'Cu', 'Cv', 'Cw', 'Cx', 'Cy', 'Cz',  'D', 'Da', 'Db', 'Dc', 'Dd', 'De', 'Df', 'Dg', 'Dh', 'Di', 'Dj', 'Dk', 'Dl', 'Dm', 'Dn', 'Do', 'Dp', 'Dq', 'Dr', 'Ds', 'Dt', 'Du', 'Dv', 'Dw', 'Dx', 'Dy', 'Dz', 'E', 'Ea', 'Eb', 'Ec', 'Ed', 'Ee', 'Ef', 'Eg', 'Eh', 'Ei', 'Ej', 'Ek', 'El', 'Em', 'En', 'Eo', 'Ep', 'Eq', 'Er', 'Es', 'Et', 'Eu', 'Ev', 'Ew', 'Ex', 'Ey', 'Ez', 'F',  'Fa', 'Fb', 'Fc', 'Fd', 'Fe', 'Ff', 'Fg', 'Fh', 'Fi', 'Fj', 'Fk', 'Fl', 'Fm', 'Fn', 'Fo', 'Fp', 'Fq', 'Fr', 'Fs', 'Ft', 'Fu', 'Fv', 'Fw', 'Fx', 'Fy', 'Fz', 'G', 'Ga', 'Gb', 'Gc', 'Gd', 'Ge', 'Gf', 'Gg', 'Gh', 'Gi', 'Gj', 'Gk', 'Gl', 'Gm', 'Gn', 'Go', 'Gp', 'Gq', 'Gr', 'Gs', 'Gt', 'Gu', 'Gv', 'Gw', 'Gx', 'Gy', 'Gz', 'H', 'Ha', 'Hb', 'Hc', 'Hd', 'He', 'Hf', 'Hg', 'Hh', 'Hi', 'Hj', 'Hk', 'Hl', 'Hm', 'Hn', 'Ho', 'Hp', 'Hq', 'Hr', 'Hs', 'Ht', 'Hu', 'Hv', 'Hw', 'Hx', 'Hy', 'Hz', 'I', 'Ia', 'Ib', 'Ic', 'Id', 'Ie', 'If', 'Ig', 'Ih', 'Ii', 'Ij', 'Ik', 'Il', 'Im', 'In', 'Io', 'Ip', 'Iq', 'Ir', 'Is', 'It', 'Iu', 'Iv', 'Iw', 'Ix', 'Iy', 'Iz', 'J', 'Ja', 'Jb', 'Jc', 'Jd', 'Je', 'Jf', 'Jg', 'Jh', 'Ji', 'Jj', 'Jk', 'Jl', 'Jm', 'Jn', 'Jo', 'Jp', 'Jq', 'Jr', 'Js', 'Jt', 'Ju', 'Jv', 'Jw', 'Jx', 'Jy', 'Jz', 'K', 'Ka', 'Kb', 'Kc', 'Kd', 'Ke', 'Kf', 'Kg', 'Kh', 'Ki', 'Kj', 'Kk', 'Kl', 'Km', 'Kn', 'Ko', 'Kp', 'Kq', 'Kr', 'Ks', 'Kt', 'Ku', 'Kv', 'Kw', 'Kx', 'Ky', 'Kz', 'L', 'La', 'Lb', 'Lc', 'Ld', 'Le', 'Lf', 'Lg', 'Lh', 'Li', 'Lj', 'Lk', 'Ll', 'Lm', 'Ln', 'Lo', 'Lp', 'Lq', 'Lr', 'Ls', 'Lt', 'Lu', 'Lv', 'Lw', 'Lx', 'Ly', 'Lz', 'M', 'Ma', 'Mb', 'Mc', 'Md', 'Me', 'Mf', 'Mg', 'Mh', 'Mi', 'Mj', 'Mk', 'Ml', 'Mm', 'Mn', 'Mo', 'Mp', 'Mq', 'Mr', 'Ms', 'Mt', 'Mu', 'Mv', 'Mw', 'Mx', 'My', 'Mz', 'N', 'Na', 'Nb', 'Nc', 'Nd', 'Ne', 'Nf', 'Ng', 'Nh', 'Ni', 'Nj', 'Nk', 'Nl', 'Nm', 'Nn', 'No', 'Np', 'Nq', 'Nr', 'Ns', 'Nt', 'Nu', 'Nv', 'Nw', 'Nx', 'Ny', 'Nz', 'O', 'Oa', 'Ob', 'Oc', 'Od', 'Oe', 'Of', 'Og', 'Oh', 'Oi', 'Oj', 'Ok', 'Ol', 'Om', 'On', 'Oo', 'Op', 'Oq', 'Or', 'Os', 'Ot', 'Ou', 'Ov', 'Ow', 'Ox', 'Oy', 'Oz', 'P', 'Pa', 'Pb', 'Pc', 'Pd', 'Pe', 'Pf', 'Pg', 'Ph', 'Pi', 'Pj', 'Pk', 'Pl', 'Pm', 'Pn', 'Po', 'Pp', 'Pq', 'Pr', 'Ps', 'Pt', 'Pu', 'Pv', 'Pw', 'Px', 'Py', 'Pz', 'Q', 'Qa', 'Qb', 'Qc', 'Qd', 'Qe', 'Qf', 'Qg', 'Qh', 'Qi', 'Qj', 'Qk', 'Ql', 'Qm', 'Qn', 'Qo', 'Qp', 'Qq', 'Qr', 'Qs', 'Qt', 'Qu', 'Qv', 'Qw', 'Qx', 'Qy', 'Qz', 'R', 'Ra', 'Rb', 'Rc', 'Rd', 'Re', 'Rf', 'Rg', 'Rh', 'Ri', 'Rj', 'Rk', 'Rl', 'Rm', 'Rn', 'Ro', 'Rp', 'Rq', 'Rr', 'Rs', 'Rt', 'Ru', 'Rv', 'Rw', 'Rx', 'Ry', 'Rz', 'S', 'Sa', 'Sb', 'Sc', 'Sd', 'Se', 'Sf', 'Sg', 'Sh', 'Si', 'Sj', 'Sk', 'Sl', 'Sm', 'Sn', 'So', 'Sp', 'Sq', 'Sr', 'Ss', 'St', 'Su', 'Sv', 'Sw', 'Sx', 'Sy', 'Sz', 'T', 'Ta', 'Tb', 'Tc', 'Td', 'Te', 'Tf', 'Tg', 'Th', 'Ti', 'Tj', 'Tk', 'Tl', 'Tm', 'Tn', 'To', 'Tp', 'Tq', 'Tr', 'Ts', 'Tt', 'Tu', 'Tv', 'Tw', 'Tx', 'Ty', 'Tz', 'U', 'Ua', 'Ub', 'Uc', 'Ud', 'Ue', 'Uf', 'Ug', 'Uh', 'Ui', 'Uj', 'Uk', 'Ul', 'Um', 'Un', 'Uo', 'Up', 'Uq', 'Ur', 'Us', 'Ut', 'Uu', 'Uv', 'Uw', 'Ux', 'Uy', 'Uz', 'V', 'Va', 'Vb', 'Vc', 'Vd', 'Ve', 'Vf', 'Vg', 'Vh', 'Vi', 'Vj', 'Vk', 'Vl', 'Vm', 'Vn', 'Vo', 'Vp', 'Vq', 'Vr', 'Vs', 'Vt', 'Vu', 'Vv', 'Vw', 'Vx', 'Vy', 'Vz', 'W', 'Wa', 'Wb', 'Wc', 'Wd', 'We', 'Wf', 'Wg', 'Wh', 'Wi', 'Wj', 'Wk', 'Wl', 'Wm', 'Wn', 'Wo', 'Wp', 'Wq', 'Wr', 'Ws', 'Wt', 'Wu', 'Wv', 'Ww', 'Wx', 'Wy', 'Wz', 'X', 'Xa', 'Xb', 'Xc', 'Xd', 'Xe', 'Xf', 'Xg', 'Xh', 'Xi', 'Xj', 'Xk', 'Xl', 'Xm', 'Xn', 'Xo', 'Xp', 'Xq', 'Xr', 'Xs', 'Xt', 'Xu', 'Xv', 'Xw', 'Xx', 'Xy', 'Xz', 'Y', 'Ya', 'Yb', 'Yc', 'Yd', 'Ye', 'Yf', 'Yg', 'Yh', 'Yi', 'Yj', 'Yk', 'Yl', 'Ym', 'Yn', 'Yo', 'Yp', 'Yq', 'Yr', 'Ys', 'Yt', 'Yu', 'Yv', 'Yw', 'Yx', 'Yy', 'Yz', 'Z', 'Za', 'Zb', 'Zc', 'Zd', 'Ze', 'Zf', 'Zg', 'Zh', 'Zi', 'Zj', 'Zk', 'Zl', 'Zm', 'Zn', 'Zo', 'Zp', 'Zq', 'Zr', 'Zs', 'Zt', 'Zu', 'Zv', 'Zw', 'Zx', 'Zy', 'Zz']
+lettersmix2 = ['a', 'aA', 'aB', 'aC', 'aD', 'aE', 'aF', 'aG', 'aH', 'aI', 'aJ', 'aK', 'aL', 'aM', 'aN', 'aO', 'aP', 'aQ', 'aR', 'aS', 'aT', 'aU', 'aV', 'aW', 'aX', 'aY', 'aZ', 'b', 'bA', 'bB', 'bC', 'bD', 'bE', 'bF', 'bG', 'bH', 'bI', 'bJ', 'bK', 'bL', 'bM', 'bN', 'bO', 'bP', 'bQ', 'bR', 'bS', 'bT', 'bU', 'bV', 'bW', 'bX', 'bY', 'bZ', 'c', 'cA', 'cB', 'cC', 'cD', 'cE', 'cF', 'cG', 'cH', 'cI', 'cJ', 'cK', 'cL', 'cM', 'cN', 'cO', 'cP', 'cQ', 'cR', 'cS', 'cT', 'cU', 'cV', 'cW', 'cX', 'cY', 'cZ',  'd', 'dA', 'dB', 'dC', 'dD', 'dE', 'dF', 'dG', 'dH', 'dI', 'dJ', 'dK', 'dL', 'dM', 'dN', 'dO', 'dP', 'dQ', 'dR', 'dS', 'dT', 'dU', 'dV', 'dW', 'dX', 'dY', 'dZ', 'e', 'eA', 'eB', 'eC', 'eD', 'eE', 'eF', 'eG', 'eH', 'eI', 'eJ', 'eK', 'eL', 'eM', 'eN', 'eO', 'eP', 'eQ', 'eR', 'eS', 'eT', 'eU', 'eV', 'eW', 'eX', 'eY', 'eZ', 'f',  'fA', 'fB', 'fC', 'fD', 'fE', 'fF', 'fG', 'fH', 'fI', 'fJ', 'fK', 'fL', 'fM', 'fN', 'fO', 'fP', 'fQ', 'fR', 'fS', 'fT', 'fU', 'fV', 'fW', 'fX', 'fY', 'fZ', 'g', 'gA', 'gB', 'gC', 'gD', 'gE', 'gF', 'gG', 'gH', 'gI', 'gJ', 'gK', 'gL', 'gM', 'gN', 'gO', 'gP', 'gQ', 'gR', 'gS', 'gT', 'gU', 'gV', 'gW', 'gX', 'gY', 'gZ', 'h', 'hA', 'hB', 'hC', 'hD', 'hE', 'hF', 'hG', 'hH', 'hI', 'hJ', 'hK', 'hL', 'hM', 'hN', 'hO', 'hP', 'hQ', 'hR', 'hS', 'hT', 'hU', 'hV', 'hW', 'hX', 'hY', 'hZ', 'i', 'iA', 'iB', 'iC', 'iD', 'iE', 'iF', 'iG', 'iH', 'iI', 'iJ', 'iK', 'iL', 'iM', 'iN', 'iO', 'iP', 'iQ', 'iR', 'iS', 'iT', 'iU', 'iV', 'iW', 'iX', 'iY', 'iZ', 'j', 'jA', 'jB', 'jC', 'jD', 'jE', 'jF', 'jG', 'jH', 'jI', 'jJ', 'jK', 'jL', 'jM', 'jN', 'jO', 'jP', 'jQ', 'jR', 'jS', 'jT', 'jU', 'jV', 'jW', 'jX', 'jY', 'jZ', 'k', 'kA', 'kB', 'kC', 'kD', 'kE', 'kF', 'kG', 'kH', 'kI', 'kJ', 'kK', 'kL', 'kM', 'kN', 'kO', 'kP', 'kQ', 'kR', 'kS', 'kT', 'kU', 'kV', 'kW', 'kX', 'kY', 'kZ', 'l', 'lA', 'lB', 'lC', 'lD', 'lE', 'lF', 'lG', 'lH', 'lI', 'lJ', 'lK', 'lL', 'lM', 'lN', 'lO', 'lP', 'lQ', 'lR', 'lS', 'lT', 'lU', 'lV', 'lW', 'lX', 'lY', 'lZ', 'm', 'mA', 'mB', 'mC', 'mD', 'mE', 'mF', 'mG', 'mH', 'mI', 'mJ', 'mK', 'mL', 'mM', 'mN', 'mO', 'mP', 'mQ', 'mR', 'mS', 'mT', 'mU', 'mV', 'mW', 'mX', 'mY', 'mZ', 'n', 'nA', 'nB', 'nC', 'nD', 'nE', 'nF', 'nG', 'nH', 'nI', 'nJ', 'nK', 'nL', 'nM', 'nN', 'nO', 'nP', 'nQ', 'nR', 'nS', 'nT', 'nU', 'nV', 'nW', 'nX', 'nY', 'nZ', 'o', 'oA', 'oB', 'oC', 'oD', 'oE', 'oF', 'oG', 'oH', 'oI', 'oJ', 'oK', 'oL', 'oM', 'oN', 'oO', 'oP', 'oQ', 'oR', 'oS', 'oT', 'oU', 'oV', 'oW', 'oX', 'oY', 'oZ', 'p', 'pA', 'pB', 'pC', 'pD', 'pE', 'pF', 'pG', 'pH', 'pI', 'pJ', 'pK', 'pL', 'pM', 'pN', 'pO', 'pP', 'pQ', 'pR', 'pS', 'pT', 'pU', 'pV', 'pW', 'pX', 'pY', 'pZ', 'q', 'qA', 'qB', 'qC', 'qD', 'qE', 'qF', 'qG', 'qH', 'qI', 'qJ', 'qK', 'qL', 'qM', 'qN', 'qO', 'qP', 'qQ', 'qR', 'qS', 'qT', 'qU', 'qV', 'qW', 'qX', 'qY', 'qZ', 'r', 'rA', 'rB', 'rC', 'rD', 'rE', 'rF', 'rG', 'rH', 'rI', 'rJ', 'rK', 'rL', 'rM', 'rN', 'rO', 'rP', 'rQ', 'rR', 'rS', 'rT', 'rU', 'rV', 'rW', 'rX', 'rY', 'rZ', 's', 'sA', 'sB', 'sC', 'sD', 'sE', 'sF', 'sG', 'sH', 'sI', 'sJ', 'sK', 'sL', 'sM', 'sN', 'sO', 'sP', 'sQ', 'sR', 'sS', 'sT', 'sU', 'sV', 'sW', 'sX', 'sY', 'sZ', 't', 'tA', 'tB', 'tC', 'tD', 'tE', 'tF', 'tG', 'tH', 'tI', 'tJ', 'tK', 'tL', 'tM', 'tN', 'tO', 'tP', 'tQ', 'tR', 'tS', 'tT', 'tU', 'tV', 'tW', 'tX', 'tY', 'tZ', 'u', 'uA', 'uB', 'uC', 'uD', 'uE', 'uF', 'uG', 'uH', 'uI', 'uJ', 'uK', 'uL', 'uM', 'uN', 'uO', 'uP', 'uQ', 'uR', 'uS', 'uT', 'uU', 'uV', 'uW', 'uX', 'uY', 'uZ', 'v', 'vA', 'vB', 'vC', 'vD', 'vE', 'vF', 'vG', 'vH', 'vI', 'vJ', 'vK', 'vL', 'vM', 'vN', 'vO', 'vP', 'vQ', 'vR', 'vS', 'vT', 'vU', 'vV', 'vW', 'vX', 'vY', 'vZ', 'w', 'wA', 'wB', 'wC', 'wD', 'wE', 'wF', 'wG', 'wH', 'wI', 'wJ', 'wK', 'wL', 'wM', 'wN', 'wO', 'wP', 'wQ', 'wR', 'wS', 'wT', 'wU', 'wV', 'wW', 'wX', 'wY', 'wZ', 'x', 'xA', 'xB', 'xC', 'xD', 'xE', 'xF', 'xG', 'xH', 'xI', 'xJ', 'xK', 'xL', 'xM', 'xN', 'xO', 'xP', 'xQ', 'xR', 'xS', 'xT', 'xU', 'xV', 'xW', 'xX', 'xY', 'xZ', 'y', 'yA', 'yB', 'yC', 'yD', 'yE', 'yF', 'yG', 'yH', 'yI', 'yJ', 'yK', 'yL', 'yM', 'yN', 'yO', 'yP', 'yQ', 'yR', 'yS', 'yT', 'yU', 'yV', 'yW', 'yX', 'yY', 'yZ', 'z', 'zA', 'zB', 'zC', 'zD', 'zE', 'zF', 'zG', 'zH', 'zI', 'zJ', 'zK', 'zL', 'zM', 'zN', 'zO', 'zP', 'zQ', 'zR', 'zS', 'zT', 'zU', 'zV', 'zW', 'zX', 'zY', 'zZ']
+
+@bind("#enter", "click")
+@bind("#back", "click")
+def envalue(ev):
+	myWorker.send([x.value for x in inputs])
+
+@bind("#option1", "click")
+@bind("#option2", "click")
+@bind("#option3", "click")
+@bind("#option4", "click")
+@bind("#option5", "click")
+def change(event):
+	button.text = "Next"
+	document["prompt"].style.display = "inline"
+	document["enter"].style.display = "inline"
+	document["back"].style.display = "inline"
+	document["option1"].style.display = "none"
+	document["option2"].style.display = "none"
+	document["option3"].style.display = "none"
+	document["option4"].style.display = "none"
+	document["option5"].style.display = "none"
+	myWorker.send([x.value for x in inputs])
+
+@bind(myWorker, "message")
+def onmessage(e):
+	if storage['mode'] == "booksel":
+		if e.data == "1":
+			storage['mode'] = "callnum1"
+			flavor.text = "Search by Call Number - Stacks"
+			ins.text = "Please Enter the First Set of Letter(s) of the Call Number"
+			hint.text = "Example: Z in Z710.M23 2005 or PZ in PZ8.3.S855 LI 1995"
+		if e.data == "2":
+			storage['mode'] = "rcallnum1"
+			flavor.text = "Search by Call Number - Reference"
+			ins.text = "Please Enter the First Set of Letter(s) of the Call Number"
+			hint.text = "Example: Z in Z710.M23 2005 or PZ in PZ8.3.S855 LI 1995"
+		if e.data == "3":
+			storage['mode'] = "jcallnum1"
+			flavor.text = "Search by Call Number - Juvenile"
+			ins.text = "Please Enter the First Set of Letter(s) of the Call Number"
+			hint.text = "Example: Z in Z710.M23 2005 or PZ in PZ8.3.S855 LI 1995"
+		if e.data == "4":
+			webbrowser.open('images/search/Curriculum.jpg', autoraise=True)
+			flavor.text = "Located Behind Reference & Juvenile (Curriculum)"
+			ins.text = "Search Another Collection?"
+			hint.text = "If no graphic appeared, you may need to allow pop-ups."
+			document["back"].style.display = "none"
+			document["prompt"].style.display = "none"
+			document["enter"].style.display = "none"
+			document["option1"].style.display = "inline"
+			document["option2"].style.display = "inline"
+			document["option3"].style.display = "inline"
+			document["option4"].style.display = "inline"
+			document["option5"].style.display = "inline"
+		if e.data == "5":
+			storage['mode'] = "periodicals1"
+			flavor.text = "Search for Periodicals"
+			ins.text = "Please Enter the First Two Letters of the Periodical's Name"
+			hint.text = "Example: FO for Fortune or SC for Scientific American"
+			button.text = "Locate"
+	if storage['mode'] == "callnum1":
+		if e.data == "Back" or e.data == "back" or e.data == "BACK":
+			storage['mode'] = "booksel"
+			flavor.text = "Welcome to the Robert A. Nicholson Library"
+			ins.text = "Search a Different Collection?"
+			document["back"].style.display = "none"
+			document["prompt"].style.display = "none"
+			document["enter"].style.display = "none"
+			document["option1"].style.display = "inline"
+			document["option2"].style.display = "inline"
+			document["option3"].style.display = "inline"
+			document["option4"].style.display = "inline"
+			document["option5"].style.display = "inline"
+			hint.text = "Stacks contains most of the library's books. If unsure, start there."
+		for i in range(len(letters)):
+			if letters[i] == e.data or letterslow[i] == e.data or lettersmix1[i] == e.data or lettersmix2[i] == e.data:
+				storage['mode'] = "callnum2"
+				storage['letter'] = str(i)
+				flavor.text = f'Call Number: {e.data}'
+				ins.text = "Please Enter the Digits Preceding the First '.'"
+				hint.text = "Example: 710 in Z710.M23 2005 or 8 in PZ8.3.S855 LI 1995"
+				button.text = "Locate"
+	if storage['mode'] == "callnum2":
+		if e.data == "Back" or e.data == "back" or e.data == "BACK":
+			storage['mode'] = "callnum1"
+			flavor.text = "Search by Call Number - Stacks"
+			ins.text = "Please Enter the First Set of Letter(s) of the Call Number"
+			hint.text = "Example: Z in Z710.M23 2005 or PZ in PZ8.3.S855 LI 1995"
+		for i in range(1, 10000):
+			if int(e.data) == i:
+				storage['mode'] = "booksel"
+				ins.text = "Search Another Collection?"
+				hint.text = "If no graphic appeared, you may need to allow pop-ups."
+				document["back"].style.display = "none"
+				document["prompt"].style.display = "none"
+				document["enter"].style.display = "none"
+				document["option1"].style.display = "inline"
+				document["option2"].style.display = "inline"
+				document["option3"].style.display = "inline"
+				document["option4"].style.display = "inline"
+				document["option5"].style.display = "inline"
+				if int(storage['letter']) <= 26:
+					webbrowser.open('images/search/001a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 001a"
+				if int(storage['letter']) == 27:
+					if int(e.data) <= 59:
+						webbrowser.open('images/search/001a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 001a"
+					if 60 <= int(e.data) <= 819:
+						webbrowser.open('images/search/002a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 002a"
+					if 819 <= int(e.data) <= 2422:
+						webbrowser.open('images/search/002b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 002b"
+					if int(e.data) >= 2423:
+						webbrowser.open('images/search/001b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 001b"
+				if 28 <= int(storage['letter']) <= 29:
+					webbrowser.open('images/search/001b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 001b"
+				if int(storage['letter']) == 30:
+					if int(e.data) <= 108:
+						webbrowser.open('images/search/001b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 001b"
+					if int(e.data) >= 109:
+						webbrowser.open('images/search/003a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 003a"
+				if 31 <= int(storage['letter']) <= 32 :
+					webbrowser.open('images/search/003a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 003a"
+				if int(storage['letter']) == 33:
+					if int(e.data) <= 38:
+						webbrowser.open('images/search/003a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 003a"
+					if 39 <= int(e.data) <= 181:
+						webbrowser.open('images/search/004a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 004a"
+					if 182 <= int(e.data) <= 575:
+						webbrowser.open('images/search/004b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 004b"
+					if 576 <= int(e.data) <= 673:
+						webbrowser.open('images/search/003b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 003b"
+					if 674 <= int(e.data) <= 723:
+						webbrowser.open('images/search/005a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 005a"
+					if int(e.data) >= 724:
+						webbrowser.open('images/search/006a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 006a"
+				if 34<= int(storage['letter']) <= 36:
+					webbrowser.open('images/search/006a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 006a"
+				if int(storage['letter']) == 37:
+					if int(e.data) <= 182:
+						webbrowser.open('images/search/006a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 006a"
+					if 183 <= int(e.data) <= 1581:
+						webbrowser.open('images/search/006b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 006b"
+					if int(e.data) >= 1582:
+						webbrowser.open('images/search/005b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 005b"
+				if int(storage['letter']) == 38:
+					webbrowser.open('images/search/005b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 005b"
+				if int(storage['letter']) == 39:
+					if int(e.data) <= 51:
+						webbrowser.open('images/search/005b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 005b"
+					if 52 <= int(e.data) <= 80:
+						webbrowser.open('images/search/007a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 007a"
+					if 81 <= int(e.data) <= 560:
+						webbrowser.open('images/search/008a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 008a"
+					if 561 <= int(e.data) <= 2480:
+						webbrowser.open('images/search/008b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 008b"
+					if int(e.data) >= 2481:
+						webbrowser.open('images/search/007b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 007b"
+				if int(storage['letter']) == 40:
+					if int(e.data) <= 487:
+						flavor.text = "images/search/007b.jpg"
+					if 488 <= int(e.data) <= 729:
+						webbrowser.open('images/search/009a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 009a"
+					if int(e.data) >= 730:
+						webbrowser.open('images/search/010a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 010a"
+				if 41 <= int(storage['letter']) <= 44:
+					webbrowser.open('images/search/010a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 010a"
+				if int(storage['letter']) == 45:
+					if int(e.data) <= 65:
+						webbrowser.open('images/search/010a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 010a"
+					if 66 <= int(e.data) <= 115:
+						webbrowser.open('images/search/010b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 010b"
+					if 116 <= int(e.data) <= 123:
+						webbrowser.open('images/search/009b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 009b"
+					if 124 <= int(e.data) <= 155:
+						webbrowser.open('images/search/011a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 011a"
+					if 156 <= int(e.data) <= 329:
+						webbrowser.open('images/search/012a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 012a"
+					if 330 <= int(e.data) <= 516:
+						webbrowser.open('images/search/012b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 012b"
+					if 517 <= int(e.data) <= 1085:
+						webbrowser.open('images/search/011b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 011b"
+					if int(e.data) >= 1086:
+						webbrowser.open('images/search/013a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 013a"
+				if int(storage['letter']) == 46:
+					if int(e.data) <= 64:
+						webbrowser.open('images/search/013a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 013a"
+					if 65 <= int(e.data) <= 490:
+						webbrowser.open('images/search/014a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 014a"
+					if int == 491:
+						webbrowser.open('images/search/014b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 014b"
+					if 492 <= int(e.data) <= 551:
+						webbrowser.open('images/search/013b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 013b"
+					if 552 <= int(e.data) <= 651:
+						webbrowser.open('images/search/015a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 015a"
+					if 652 <= int(e.data) <= 1180:
+						webbrowser.open('images/search/016a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 016a"
+					if 1181 <= int(e.data) <= 1245:
+						webbrowser.open('images/search/016b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 016b"
+					if 1246 <= int(e.data) <= 1430:
+						webbrowser.open('images/search/015b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 015b"
+					if 1431 <= int(e.data) <= 1537:
+						webbrowser.open('images/search/017a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 017a"
+					if 1538 <= int(e.data) <= 2095:
+						webbrowser.open('images/search/017b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 017b"
+					if 2096 <= int(e.data) <= 2361:
+						webbrowser.open('images/search/018a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 018a"
+					if 2361 <= int(e.data) <= 2440:
+						webbrowser.open('images/search/018b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 018b"
+					if 2441 <= int(e.data) <= 2555:
+						webbrowser.open('images/search/019a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 019a"
+					if 2556<= int(e.data) <= 2595:
+						webbrowser.open('images/search/019b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 019b"
+					if 2596 <= int(e.data) <= 2630:
+						webbrowser.open('images/search/020a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 020a"
+					if 2631 <= int(e.data) <= 2675:
+						webbrowser.open('images/search/020b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 020b"
+					if 2676 <= int(e.data) <= 2785:
+						webbrowser.open('images/search/021a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 021a"
+					if int(e.data) >= 2786:
+						webbrowser.open('images/search/021b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 021b"
+				if int(storage['letter']) == 47:
+					if int(e.data) <= 21:
+						webbrowser.open('images/search/021b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 021b"
+					if 22 <= int(e.data) <= 75:
+						webbrowser.open('images/search/022a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 022a"
+					if 76 <= int(e.data) <= 95:
+						webbrowser.open('images/search/022b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 022b"
+					if 96 <= int(e.data) <= 198:
+						webbrowser.open('images/search/023a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 023a"
+					if 199 <= int(e.data) <= 304:
+						webbrowser.open('images/search/023b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 023b"
+					if 305 <= int(e.data) <= 704:
+						webbrowser.open('images/search/024a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 024a"
+					if 705 <= int(e.data) <= 766:
+						webbrowser.open('images/search/024b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 024b"
+					if 767 <= int(e.data) <= 979:
+						webbrowser.open('images/search/025a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 025a"
+					if int(e.data) >= 980:
+						webbrowser.open('images/search/025b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 025b"
+				if int(storage['letter']) == 48:
+					webbrowser.open('images/search/025b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 025b"
+				if int(storage['letter']) == 49:
+					if int(e.data) <= 29:
+						webbrowser.open('images/search/025b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 025b"
+					if 30 <= int(e.data) <= 600:
+						webbrowser.open('images/search/026a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 026a"
+					if 601 <= int(e.data) <= 652:
+						webbrowser.open('images/search/026b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 026b"
+					if 653 <= int(e.data) <= 1464:
+						webbrowser.open('images/search/027.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 027a"
+					if 1465 <= int(e.data) <= 2063:
+						webbrowser.open('images/search/027b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 027b"
+					if 2064 <= int(e.data) <= 2595:
+						webbrowser.open('images/search/028.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 028a"
+					if 2596 <= int(e.data) <= 3461:
+						webbrowser.open('images/search/028b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 028b"
+					if 3461 <= int(e.data) <= 3785:
+						webbrowser.open('images/search/029a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 029a"
+					if 3785 <= int(e.data) <= 4011:
+						webbrowser.open('images/search/029b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 029b"
+					if 4012 <= int(e.data) <= 4211:
+						webbrowser.open('images/search/030a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 030a"
+					if 4212 <= int(e.data) <= 4438:
+						webbrowser.open('images/search/030b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 030b"
+					if 4439 <= int(e.data) <= 4596:
+						webbrowser.open('images/search/031a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 031a"
+					if int(e.data) >= 4597:
+						webbrowser.open('images/search/031b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 031b"
+				if int(storage['letter']) == 50:
+					flavor.text = "images/search/031b.jpg"
+				if int(storage['letter']) == 51:
+					if int(e.data) <= 891:
+						webbrowser.open('images/search/031b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 031b"
+					if 892 <= int(e.data) <= 4827:
+						webbrowser.open('images/search/032a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 032a"
+					if int(e.data) >= 4828:
+						webbrowser.open('images/search/032b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 032b"
+				if int(storage['letter']) == 52:
+					if int(e.data) <= 9322:
+						webbrowser.open('images/search/033a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 033a"
+					if int(e.data) >= 9323:
+						webbrowser.open('images/search/033b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 033b"
+				if 53 <= int(storage['letter']) <= 80:
+					webbrowser.open('images/search/033b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 033b"
+				if int(storage['letter']) == 81:
+					if int(e.data) <= 117:
+						webbrowser.open('images/search/101a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 101a"
+					if 118 <= int(e.data) <= 531:
+						webbrowser.open('images/search/101b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 101b"
+					if 532 <= int(e.data) <= 767:
+						webbrowser.open('images/search/102a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 102a"
+					if 768 <= int(e.data) <= 839:
+						webbrowser.open('images/search/102b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 102b"
+					if int(e.data) >= 840:
+						webbrowser.open('images/search/103a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 103a"
+				if int(storage['letter']) == 82:
+					if int(e.data) <= 206:
+						webbrowser.open('images/search/103a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 103a"
+					if int(e.data) >= 207:
+						webbrowser.open('images/search/104a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 104a"
+				if int(storage['letter']) == 83:
+					if int(e.data) <= 86:
+						webbrowser.open('images/search/104a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 104a"
+					if int(e.data) >= 87:
+						webbrowser.open('images/search/105a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 105a"
+				if int(storage['letter']) == 83:
+					webbrowser.open('images/search/105a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 105a"
+				if int(storage['letter']) == 84:
+					if int(e.data) <= 256:
+						webbrowser.open('images/search/105a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 105a"
+					if int(e.data) >= 257:
+						webbrowser.open('images/search/105b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 105b"
+				if 85 <= int(storage['letter']) <= 88:
+					webbrowser.open('images/search/105b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 105b"
+				if int(storage['letter']) == 89:
+					if int(e.data) <= 857:
+						webbrowser.open('images/search/105b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 105b"
+					if int(e.data) >= 858:
+						webbrowser.open('images/search/104b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 104b"
+				if 90 <= int(storage['letter']) <= 96:
+					webbrowser.open('images/search/104b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 104b"
+				if int(storage['letter']) == 97:
+					if int(e.data) <= 302:
+						webbrowser.open('images/search/104b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 104b"
+					if int(e.data) >= 303:
+						webbrowser.open('images/search/103b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 103b"
+				if 98 <= int(storage['letter']) <= 99:
+					webbrowser.open('images/search/103b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 103b"
+				if int(storage['letter']) == 100:
+					if int(e.data) <= 62:
+						webbrowser.open('images/search/103b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 103b"
+					if 63 <= int(e.data) <= 109:
+						webbrowser.open('images/search/106a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 106a"
+					if 110 <= int(e.data) <= 272:
+						webbrowser.open('images/search/107a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 107a"
+					if 273 <= int(e.data) <= 558:
+						webbrowser.open('images/search/108a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 108a"
+					if int(e.data) >= 559:
+						webbrowser.open('images/search/108b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 108b"
+				if int(storage['letter']) == 101:
+					webbrowser.open('images/search/107b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 107b"
+				if int(storage['letter']) == 102:
+					if int(e.data) <= 122:
+						webbrowser.open('images/search/107b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 107b"
+					if int(e.data) >= 122:
+						webbrowser.open('images/search/106b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 106b"
+				if 103 <= int(storage['letter']) <= 107:
+					webbrowser.open('images/search/106b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 106b"
+				if int(storage['letter']) == 108:
+					if int(e.data) <= 99:
+						webbrowser.open('images/search/106b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 106b"
+					if 100 <= int(e.data) <= 169:
+						webbrowser.open('images/search/109a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 109a"
+					if 170 <= int(e.data) <= 183:
+						webbrowser.open('images/search/110a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 110a"
+					if 184 <= int(e.data) <= 185:
+						webbrowser.open('images/search/111a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 111a"
+					if 186 <= int(e.data) <= 188:
+						webbrowser.open('images/search/111b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 111b"
+					if 189 <= int(e.data) <= 337:
+						webbrowser.open('images/search/109b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 109b"
+					if 338 <= int(e.data) <= 457:
+						webbrowser.open('images/search/110b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 110b"
+					if 458 <= int(e.data) <= 468:
+						webbrowser.open('images/search/112a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 112a"
+					if 469 <= int(e.data) <= 767:
+						webbrowser.open('images/search/113a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 113a"
+					if 768 <= int(e.data) <= 845:
+						webbrowser.open('images/search/114a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 114a"
+					if int(e.data) >= 846:
+						webbrowser.open('images/search/114b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 114b"
+				if 109 <= int(storage['letter']) <= 134:
+					webbrowser.open('images/search/114b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 114b"
+				if int(storage['letter']) == 135:
+					if int(e.data) <= 186:
+						webbrowser.open('images/search/114b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 114b"
+					if 187 <= int(e.data) <= 786:
+						webbrowser.open('images/search/113b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 113b"
+					if 787 <= int(e.data) <= 1408:
+						webbrowser.open('images/search/112b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 112b"
+					if 1409 <= int(e.data) <= 2177:
+						webbrowser.open('images/search/115a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 115a"
+					if int(e.data) >= 2178:
+						webbrowser.open('images/search/116a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 116a"
+				if 136 <= int(storage['letter']) <= 179:
+					webbrowser.open('images/search/114b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 114b"
+				if int(storage['letter']) == 180:
+					if int(e.data) <= 135:
+						webbrowser.open('images/search/116a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 116a"
+					if int(e.data) >= 136:
+						webbrowser.open('images/search/117a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 117a"
+				if 181 <= int(storage['letter']) <= 188:
+					webbrowser.open('images/search/117a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 117a"
+				if int(storage['letter']) == 189:
+					if int(e.data) <= 97:
+						webbrowser.open('images/search/117a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 117a"
+					if int(e.data) >= 98:
+						webbrowser.open('images/search/117b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 117b"
+				if 190 <= int(storage['letter']) <= 192:
+					webbrowser.open('images/search/117b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 117b"
+				if int(storage['letter']) == 193:
+					if int(e.data) <= 30:
+						webbrowser.open('images/search/117b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 117b"
+					if 31 <= int(e.data) <= 9155:
+						webbrowser.open('images/search/116b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 116b"
+					if int(e.data) >= 9156:
+						webbrowser.open('images/search/115b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 115b"
+				if int(storage['letter']) == 194:
+					webbrowser.open('images/search/115b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 115b"
+				if int(storage['letter']) == 195:
+					if int(e.data) <= 5388:
+						webbrowser.open('images/search/115b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 115b"
+					if int(e.data) >= 5389:
+						webbrowser.open('images/search/118a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 118a"
+				if int(storage['letter']) == 196:
+					if int(e.data) <= 1978:
+						webbrowser.open('images/search/118a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 118a"
+					if int(e.data) >= 1979:
+						webbrowser.open('images/search/119a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 119a"
+				if 197 <= int(storage['letter']) <= 202:
+					webbrowser.open('images/search/119a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 119a"
+				if int(storage['letter']) == 203:
+					if int(e.data) <= 65:
+						webbrowser.open('images/search/119a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 119a"
+					if int(e.data) >= 66:
+						webbrowser.open('images/search/120a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 120a"
+				if 204 <= int(storage['letter']) <= 205:
+					webbrowser.open('images/search/120a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 120a"
+				if int(storage['letter']) == 206:
+					if int(e.data) <= 769:
+						webbrowser.open('images/search/120a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 120a"
+					if 770 <= int(e.data) <= 1420:
+						webbrowser.open('images/search/120b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 120b"
+					if int(e.data) >= 1421:
+						webbrowser.open('images/search/119b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 119b"
+				if 207 <= int(storage['letter']) <= 210:
+					webbrowser.open('images/search/119b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 119b"
+				if int(storage['letter']) == 211:
+					if int(e.data) <= 5825:
+						webbrowser.open('images/search/119b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 119b"
+					if 5826 <= int(e.data) <= 6775:
+						webbrowser.open('images/search/118b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 118b"
+					if int(e.data) >= 6776:
+						webbrowser.open('images/search/121a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 121a"
+				if int(storage['letter']) == 212:
+					webbrowser.open('images/search/121a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 121a"
+				if int(storage['letter']) == 213:
+					if int(e.data) <= 83:
+						webbrowser.open('images/search/121a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 121a"
+					if int(e.data) >= 84:
+						webbrowser.open('images/search/122a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 122a"
+				if 214 <= int(storage['letter']) <= 245:
+					webbrowser.open('images/search/122a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 122a"
+				if int(storage['letter']) == 246:
+					if int(e.data) <= 481:
+						webbrowser.open('images/search/122a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 122a"
+					if int(e.data) >= 482:
+						webbrowser.open('images/search/123a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 123a"
+				if 246 <= int(storage['letter']) <= 253:
+					webbrowser.open('images/search/123a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 123a"
+				if int(storage['letter']) == 254:
+					if int(e.data) <= 1061:
+						webbrowser.open('images/search/123a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 123a"
+					if int(e.data) >= 1062:
+						webbrowser.open('images/search/123b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 123b"
+				if 255 <= int(storage['letter']) <= 264:
+					webbrowser.open('images/search/123b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 123b"
+				if int(storage['letter']) == 265:
+					if int(e.data) <= 1818:
+						webbrowser.open('images/search/123b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 123b"
+					if int(e.data) >= 1819:
+						webbrowser.open('images/search/122b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 122b"
+				if int(storage['letter']) == 266:
+					webbrowser.open('images/search/122b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 122b"
+				if int(storage['letter']) == 267:
+					if int(e.data) <= 1977:
+						webbrowser.open('images/search/122b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 122b"
+					if int(e.data) >= 1978:
+						webbrowser.open('images/search/121b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 121b"
+				if 268 <= int(storage['letter']) <= 269:
+					webbrowser.open('images/search/121b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 121b"
+				if 270 <= int(storage['letter']) <= 297:
+					webbrowser.open('images/search/201a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 201a"
+				if int(storage['letter']) == 298:
+					if int(e.data) <= 216:
+						webbrowser.open('images/search/201a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 201a"
+					if int(e.data) >= 217:
+						webbrowser.open('images/search/202a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 202a"
+				if int(storage['letter']) == 299:
+					if int(e.data) <= 176:
+						webbrowser.open('images/search/202a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 202a"
+					if 177 <= int(e.data) <= 1032:
+						webbrowser.open('images/search/202b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 202b"
+					if 1033 <= int(e.data) <= 1576:
+						webbrowser.open('images/search/202b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 202b"
+					if 1577 <= int(e.data) <= 2806:
+						webbrowser.open('images/search/203a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 203a"
+					if int(e.data) >= 2807:
+						webbrowser.open('images/search/204a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 204a"
+				if int(storage['letter']) == 300:
+					if int(e.data) <= 405:
+						webbrowser.open('images/search/204b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 204b"
+					if 406 <= int(e.data) <= 5163:
+						webbrowser.open('images/search/203b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 203b"
+					if int(e.data) >= 5164:
+						webbrowser.open('images/search/205a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 205a"
+				if 301 <= int(storage['letter']) <= 323:
+					webbrowser.open('images/search/205a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 205a"
+				if int(storage['letter']) == 324:
+					if int(e.data) <= 356:
+						webbrowser.open('images/search/205b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 205b"
+					if 357 <= int(e.data) <= 1614:
+						webbrowser.open('images/search/206a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 206a"
+					if 1615 <= int(e.data) <= 2127:
+						webbrowser.open('images/search/206b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 206b"
+					if int(e.data) >= 2128:
+						webbrowser.open('images/search/207a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 207a"
+				if 325 <= int(storage['letter']) <= 336:
+					webbrowser.open('images/search/207a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 207a"
+				if int(storage['letter']) == 337:
+					if int(e.data) <= 160:
+						webbrowser.open('images/search/207a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 207a"
+					if 161 <= int(e.data) <= 409:
+						webbrowser.open('images/search/207b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 207b"
+					if int(e.data) == 410:
+						webbrowser.open('images/search/208a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 208a"
+					if 411 <= int(e.data) <= 1320:
+						webbrowser.open('images/search/208b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 208b"
+					if 1321 <= int(e.data) <= 3561:
+						webbrowser.open('images/search/209a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 209a"
+					if int(e.data) >= 3562:
+						webbrowser.open('images/search/209b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 209b"
+				if 338 <= int(storage['letter']) <= 343:
+					webbrowser.open('images/search/209b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 209b"
+				if int(storage['letter']) == 344:
+					if int(e.data) <= 6:
+						webbrowser.open('images/search/209a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 209a"
+					if 7 <= int(e.data) <= 165:
+						webbrowser.open('images/search/210a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 210a"
+					if int(e.data) >= 166:
+						webbrowser.open('images/search/210b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 210b"
+				if 345 <= int(storage['letter']) <= 350:
+					webbrowser.open('images/search/210b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 210b"
+				if int(storage['letter']) == 351:
+					if int(e.data) <= 6460:
+						webbrowser.open('images/search/211a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 211a"
+					if 6461 <= int(e.data) <= 7399:
+						webbrowser.open('images/search/211b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 211b"
+					if int(e.data) >= 7400:
+						webbrowser.open('images/search/212a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 212a"
+				if int(storage['letter']) == 352:
+					if int(e.data) <= 7746:
+						webbrowser.open('images/search/212a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 212a"
+					if int(e.data) >= 7747:
+						webbrowser.open('images/search/212b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 212b"
+				if 353 <= int(storage['letter']) <= 354:
+					webbrowser.open('images/search/212b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 212b"
+				if int(storage['letter']) == 355:
+					if int(e.data) <= 237:
+						webbrowser.open('images/search/212b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 212b"
+					if 238 <= int(e.data) <= 2785:
+						webbrowser.open('images/search/214a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 214a"
+					if int(e.data) >= 2786:
+						webbrowser.open('images/search/214b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 214b"
+				if 356 <= int(storage['letter']) <= 404:
+					webbrowser.open('images/search/214b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 214b"
+				if 405 <= int(storage['letter']) <= 431:
+					webbrowser.open('images/search/214b.jpg', autoraise=True)
+					flavor.text = "The 'P' Section is Currently Being Rearranged - Starts at 213"
+				if int(storage['letter']) == 432:
+					if int(e.data) <= 175:
+						webbrowser.open('images/search/229a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 229a"
+					if int(e.data) >= 176:
+						webbrowser.open('images/search/230a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 230a"
+				if int(storage['letter']) == 433:
+					if int(e.data) <= 76:
+						webbrowser.open('images/search/230a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 230a"
+					if 77 <= int(e.data) <= 271:
+						webbrowser.open('images/search/231a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 231a"
+					if 272 <= int(e.data) <= 404:
+						webbrowser.open('images/search/231b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 231b"
+					if int(e.data) >= 405:
+						webbrowser.open('images/search/230b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 230b"
+				if int(storage['letter']) == 434:
+					webbrowser.open('images/search/230b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 230b"
+				if int(storage['letter']) == 435:
+					if int(e.data) <= 83:
+						webbrowser.open('images/search/230b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 230b"
+					if 84 <= int(e.data) <= 973:
+						webbrowser.open('images/search/229b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 229b"
+					if int(e.data) >= 974:
+						webbrowser.open('images/search/232a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 232a"
+				if int(storage['letter']) == 436:
+					if int(e.data) <= 261:
+						webbrowser.open('images/search/232a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 232a"
+					if int(e.data) >= 262:
+						webbrowser.open('images/search/233a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 233a"
+				if 437 <= int(storage['letter']) <= 439:
+					webbrowser.open('images/search/233a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 233a"
+				if int(storage['letter']) == 440:
+					if int(e.data) <= 184:
+						webbrowser.open('images/search/233a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 233a"
+					if 185 <= int(e.data) <= 440:
+						webbrowser.open('images/search/234a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 234a"
+					if int(e.data) >= 441:
+						webbrowser.open('images/search/234b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 234b"
+				if 441 <= int(storage['letter']) <= 442:
+					webbrowser.open('images/search/234b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 234b"
+				if int(storage['letter']) == 443:
+					if int(e.data) <= 105:
+						webbrowser.open('images/search/234b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 234b"
+					if int(e.data) >= 106:
+						webbrowser.open('images/search/233b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 233b"
+				if int(storage['letter']) == 444:
+					if int(e.data) <= 676:
+						webbrowser.open('images/search/233b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 233b"
+					if int(e.data) >= 677:
+						webbrowser.open('images/search/232b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 232b"
+				if 445 <= int(storage['letter']) <= 447:
+					webbrowser.open('images/search/235a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 235a"
+				if int(storage['letter']) == 448:
+					if int(e.data) <= 355:
+						webbrowser.open('images/search/235a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 235a"
+					if int(e.data) >= 356:
+						webbrowser.open('images/search/236a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 236a"
+				if 449 <= int(storage['letter']) <= 458:
+					webbrowser.open('images/search/236a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 236a"
+				if int(storage['letter']) == 459:
+					if int(e.data) <= 724:
+						webbrowser.open('images/search/236a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 236a"
+					if int(e.data) >= 725:
+						webbrowser.open('images/search/237a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 237a"
+				if int(storage['letter']) == 460:
+					if int(e.data) <= 790:
+						webbrowser.open('images/search/237a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 237a"
+					if int(e.data) >= 791:
+						webbrowser.open('images/search/237b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 237b"
+				if int(storage['letter']) == 461:
+					webbrowser.open('images/search/237b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 237b"
+				if int(storage['letter']) == 462:
+					if int(e.data) <= 336:
+						webbrowser.open('images/search/237b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 237b"
+					if 337 <= int(e.data) <= 481:
+						webbrowser.open('images/search/236b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 236b"
+					if 482 <= int(e.data) <= 564:
+						webbrowser.open('images/search/235b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 235b"
+					if int(e.data) >= 565:
+						webbrowser.open('images/search/238a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 238a"
+				if 463 <= int(storage['letter']) <= 465:
+					webbrowser.open('images/search/238a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 238a"
+				if int(storage['letter']) == 466:
+					if int(e.data) <= 631:
+						webbrowser.open('images/search/238a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 238a"
+					if int(e.data) >= 632:
+						webbrowser.open('images/search/239a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 239a"
+				if 467 <= int(storage['letter']) <= 487:
+					webbrowser.open('images/search/239a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 239a"
+				if int(storage['letter']) == 488:
+					if int(e.data) <= 407:
+						webbrowser.open('images/search/239a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 239a"
+					if int(e.data) >= 408:
+						webbrowser.open('images/search/240a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 240a"
+				if 489 <= int(storage['letter']) <= 512:
+					webbrowser.open('images/search/240a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 240a"
+				if int(storage['letter']) == 513:
+					if int(e.data) <= 15:
+						webbrowser.open('images/search/240a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 240a"
+					if int(e.data) >= 16:
+						webbrowser.open('images/search/240b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 240b"
+				if 514 <= int(storage['letter']) <= 524:
+					webbrowser.open('images/search/240b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 240b"
+				if int(storage['letter']) == 525:
+					if int(e.data) <= 788:
+						webbrowser.open('images/search/240b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 240b"
+					if int(e.data) >= 789:
+						webbrowser.open('images/search/239b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 239b"
+				if 526 <= int(storage['letter']) <= 542:
+					webbrowser.open('images/search/239b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 239b"
+				if 543 <= int(storage['letter']) <= 701:
+					webbrowser.open('images/search/238b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 238b"
+	if storage['mode'] == "rcallnum1":
+		if e.data == "Back" or e.data == "back" or e.data == "BACK":
+			storage['mode'] = "booksel"
+			flavor.text = "Welcome to the Robert A. Nicholson Library"
+			ins.text = "Search a Different Collection?"
+			document["back"].style.display = "none"
+			document["prompt"].style.display = "none"
+			document["enter"].style.display = "none"
+			document["option1"].style.display = "inline"
+			document["option2"].style.display = "inline"
+			document["option3"].style.display = "inline"
+			document["option4"].style.display = "inline"
+			document["option5"].style.display = "inline"
+			hint.text = "Stacks contains most of the library's books. If unsure, start there."
+		for i in range(len(letters)):
+			if letters[i] == e.data or letterslow[i] == e.data or lettersmix1[i] == e.data or lettersmix2[i] == e.data:
+				storage['mode'] = "rcallnum2"
+				storage['letter'] = str(i)
+				flavor.text = f'Call Number: {e.data}'
+				ins.text = "Please Enter the Digits Preceding the First '.'"
+				hint.text = "Example: 710 in Z710.M23 2005 or 8 in PZ8.3.S855 LI 1995"
+	if storage['mode'] == "rcallnum2":
+		if e.data == "Back" or e.data == "back" or e.data == "BACK":
+			storage['mode'] = "rcallnum1"
+			flavor.text = "Search by Call Number - Reference"
+			ins.text = "Please Enter the First Set of Letter(s) of the Call Number"
+			hint.text = "Example: Z in Z710.M23 2005 or PZ in PZ8.3.S855 LI 1995"
+		for i in range(1, 10000):
+			if int(e.data) == i:
+				storage['mode'] = "booksel"
+				ins.text = "Search Another Collection?"
+				hint.text = "If no graphic appeared, you may need to allow pop-ups."
+				document["back"].style.display = "none"
+				document["prompt"].style.display = "none"
+				document["enter"].style.display = "none"
+				document["option1"].style.display = "inline"
+				document["option2"].style.display = "inline"
+				document["option3"].style.display = "inline"
+				document["option4"].style.display = "inline"
+				document["option5"].style.display = "inline"
+				if int(storage['letter']) <= 45:
+					webbrowser.open('images/search/035a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 035a"
+				if int(storage['letter']) == 46:
+					if int(e.data) <= 440:
+						webbrowser.open('images/search/035a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 035a"
+					if 441 <= int(e.data) <= 491:
+						webbrowser.open('images/search/035b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 035b"
+					if int(e.data) >= 492:
+						webbrowser.open('images/search/036a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 036a"
+				if 47 <= int(storage['letter']) <= 80:
+					webbrowser.open('images/search/036a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 036a"
+				if int(storage['letter']) == 81:
+					if int(e.data) <= 442:
+						webbrowser.open('images/search/036a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 036a"
+					if int(e.data) >= 443:
+						webbrowser.open('images/search/036b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 036b"
+				if 82 <= int(storage['letter']) <= 253:
+					webbrowser.open('images/search/036b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 036b"
+				if int(storage['letter']) == 254:
+					if int(e.data) <= 2403:
+						webbrowser.open('images/search/036b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 036b"
+					if int(e.data) >= 2404:
+						webbrowser.open('images/search/037a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 037a"
+				if 255 <= int(storage['letter']) <= 409:
+					webbrowser.open('images/search/037a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 037a"
+				if int(storage['letter']) == 410:
+					if int(e.data) <= 1591:
+						webbrowser.open('images/search/037a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 037a"
+					if int(e.data) >= 1592:
+						webbrowser.open('images/search/037b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 037b"
+				if int(storage['letter']) >= 411:
+					webbrowser.open('images/search/0037b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 037b"
+	if storage['mode'] == "jcallnum1":
+		if e.data == "Back" or e.data == "back" or e.data == "BACK":
+			storage['mode'] = "booksel"
+			flavor.text = "Welcome to the Robert A. Nicholson Library"
+			ins.text = "Search a Different Collection?"
+			document["back"].style.display = "none"
+			document["prompt"].style.display = "none"
+			document["enter"].style.display = "none"
+			document["option1"].style.display = "inline"
+			document["option2"].style.display = "inline"
+			document["option3"].style.display = "inline"
+			document["option4"].style.display = "inline"
+			document["option5"].style.display = "inline"
+			hint.text = "Stacks contains most of the library's books. If unsure, start there."
+		for i in range(len(letters)):
+			if letters[i] == e.data or letterslow[i] == e.data or lettersmix1[i] == e.data or lettersmix2[i] == e.data:
+				storage['mode'] = "jcallnum2"
+				storage['letter'] = str(i)
+				flavor.text = f'Call Number: {e.data}'
+				ins.text = "Please Enter the Digits Preceding the First '.'"
+				hint.text = "Example: 710 in Z710.M23 2005 or 8 in PZ8.3.S855 LI 1995"
+				button.text = "Locate"
+	if storage['mode'] == "jcallnum2":
+		if e.data == "Back" or e.data == "back" or e.data == "BACK":
+			storage['mode'] = "jcallnum1"
+			flavor.text = "Search by Call Number - Juvenile"
+			ins.text = "Please Enter the First Set of Letter(s) of the Call Number"
+			hint.text = "Example: Z in Z710.M23 2005 or PZ in PZ8.3.S855 LI 1995"
+		for i in range(1, 10000):
+			if int(e.data) == i:
+				storage['mode'] = "booksel"
+				ins.text = "Search Another Collection?"
+				hint.text = "If no graphic appeared, you may need to allow pop-ups."
+				document["back"].style.display = "none"
+				document["prompt"].style.display = "none"
+				document["enter"].style.display = "none"
+				document["option1"].style.display = "inline"
+				document["option2"].style.display = "inline"
+				document["option3"].style.display = "inline"
+				document["option4"].style.display = "inline"
+				document["option5"].style.display = "inline"
+				if int(storage['letter']) <= 99:
+					webbrowser.open('images/search/038a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 038a"
+				if int(storage['letter']) == 100:
+					if int(e.data) <= 112:
+						webbrowser.open('images/search/038a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 038a"
+					if int(e.data) >= 113:
+						webbrowser.open('images/search/038b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 038b"
+				if 101 <= int(storage['letter']) <= 275:
+					webbrowser.open('images/search/038b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 038b"
+				if int(storage['letter']) == 276:
+					if int(e.data) <= 4166:
+						webbrowser.open('images/search/038b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 038b"
+					if int(e.data) >= 4167:
+						webbrowser.open('images/search/039a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 039a"
+				if 277 <= int(storage['letter']) <= 423:
+					webbrowser.open('images/search/039a.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 039a"
+				if int(storage['letter']) == 424:
+					if int(e.data) <= 3560:
+						webbrowser.open('images/search/039a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 039a"
+					if int(e.data) >= 3561:
+						webbrowser.open('images/search/039b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 039b"
+				if 425 <= int(storage['letter']) <= 430:
+					webbrowser.open('images/search/039b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 039b"
+				if int(storage['letter']) == 431:
+					if int(e.data) <= 6:
+						webbrowser.open('images/search/039b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 039b"
+					if int(e.data) == 7:
+						webbrowser.open('images/search/040a.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 040a"
+					if int(e.data) >= 8:
+						webbrowser.open('images/search/040b.jpg', autoraise=True)
+						flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 040b"
+				if int(storage['letter']) >= 432:
+					webbrowser.open('images/search/040b.jpg', autoraise=True)
+					flavor.text = letters[int(storage['letter'])] + f"{e.data} is on Shelf 040b"
+	if storage['mode'] == "periodicals1":
+		if e.data == "Back" or e.data == "back" or e.data == "BACK":
+			storage['mode'] = "booksel"
+			flavor.text = "Welcome to the Robert A. Nicholson Library"
+			ins.text = "Search a Different Collection?"
+			document["back"].style.display = "none"
+			document["prompt"].style.display = "none"
+			document["enter"].style.display = "none"
+			document["option1"].style.display = "inline"
+			document["option2"].style.display = "inline"
+			document["option3"].style.display = "inline"
+			document["option4"].style.display = "inline"
+			document["option5"].style.display = "inline"
+			hint.text = "Stacks contains most of the library's books. If unsure, start there."
+		if len(e.data) == 2:	
+			for i in range(len(letters)):
+				if letters[i] == e.data or letterslow[i] == e.data or lettersmix1[i] == e.data or lettersmix2[i] == e.data:
+					storage['mode'] = "booksel"
+					ins.text = "Search Another Collection?"
+					hint.text = "If no graphic appeared, you may need to allow pop-ups."
+					document["back"].style.display = "none"
+					document["prompt"].style.display = "none"
+					document["enter"].style.display = "none"
+					document["option1"].style.display = "inline"
+					document["option2"].style.display = "inline"
+					document["option3"].style.display = "inline"
+					document["option4"].style.display = "inline"
+					document["option5"].style.display = "inline"
+					if i <= 13:
+						webbrowser.open('images/search/AM.jpg', autoraise=True)
+						flavor.text = "First Row - Left(Start-AM)"
+					if 14 <= i <= 20:
+						webbrowser.open('images/search/AT.jpg', autoraise=True)
+						flavor.text = "First Row - Right (AN-AT)"
+					if 21 <= i <= 59:
+						webbrowser.open('images/search/CE.jpg', autoraise=True)
+						flavor.text = "Second Row - Left (AU-CE)"
+					if 60 <= i <= 69:
+						webbrowser.open('images/search/CO.jpg', autoraise=True)
+						flavor.text = "Second Row - Right (CF-CO)"
+					if 70 <= i <= 75:
+						webbrowser.open('images/search/CU.jpg', autoraise=True)
+						flavor.text = "Third Row - Left (CP-CU)"
+					if 76 <= i <= 128:
+						webbrowser.open('images/search/ET.jpg', autoraise=True)
+						flavor.text = "Third Row - Right (CV-ET)"
+					if 129 <= i <= 190:
+						webbrowser.open('images/search/HA.jpg', autoraise=True)
+						flavor.text = "Fourth Row - Left (EU-HA)"
+					if 191 <= i <= 244:
+						webbrowser.open('images/search/JA.jpg', autoraise=True)
+						flavor.text = "Fourth Row - Right (HB-JA)"
+					if 245 <= i <= 258:
+						webbrowser.open('images/search/JO.jpg', autoraise=True)
+						flavor.text = "Fifth Row - Left (JB-JO)"
+					if 259 <= i <= 264:
+						webbrowser.open('images/search/JU.jpg', autoraise=True)
+						flavor.text = "Fifth Row - Right (JP-JU)"
+					if 265 <= i <= 339:
+						webbrowser.open('images/search/MO.jpg', autoraise=True)
+						flavor.text = "Sixth Row - Left (JV-MO)"
+					if 340 <= i <= 356:
+						webbrowser.open('images/search/NE.jpg', autoraise=True)
+						flavor.text = "Sixth Row - Right (MP-NE)"
+					if 357 <= i <= 410:
+						webbrowser.open('images/search/PE.jpg', autoraise=True)
+						flavor.text = "Seventh Row - Left (NF-PE)"
+					if 411 <= i <= 464:
+						webbrowser.open('images/search/RE.jpg', autoraise=True)
+						flavor.text = "Seventh Row - Right (PF-RE)"
+					if 465 <= i <= 489:
+						webbrowser.open('images/search/SC.jpg', autoraise=True)
+						flavor.text = "Eighth Row - Left (RF-SC)"
+					if 490 <= i <= 502:
+						webbrowser.open('images/search/SP.jpg', autoraise=True)
+						flavor.text = "Eighth Row - Right (SD-SP)"
+					if 503 <= i <= 522:
+						webbrowser.open('images/search/TI.jpg', autoraise=True)
+						flavor.text = "Ninth Row - Left (SQ-TI)"
+					if i >= 523:
+						webbrowser.open('images/search/ZZ.jpg', autoraise=True)
+						flavor.text = "Ninth Row - Right (TJ-End)"
+</script>
+</body>
